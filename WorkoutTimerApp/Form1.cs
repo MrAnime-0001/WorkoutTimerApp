@@ -2,6 +2,7 @@ using System;
 using System.Windows.Forms;
 using NAudio.Wave;
 using System.IO;
+using Gma.System.MouseKeyHook;
 
 namespace WorkoutTimerApp
 {
@@ -14,8 +15,10 @@ namespace WorkoutTimerApp
         private AudioFileReader mp3FileReader;
         private System.Windows.Forms.Timer timer1;
         private NotifyIcon notifyIcon;
+        private IKeyboardMouseEvents globalHook;
 
         private bool useMessageBox = false; // Ensure notifications are the default
+
 
         public MainForm()
         {
@@ -39,6 +42,17 @@ namespace WorkoutTimerApp
 
             // Ensure the toggle button reflects the default notification mode
             UpdateToggleButtonText();
+
+            globalHook = Hook.GlobalEvents();
+            globalHook.KeyDown += GlobalHook_KeyDown;
+
+            this.Load += MainForm_Load;
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            globalHook = Hook.GlobalEvents();
+            globalHook.KeyDown += GlobalHook_KeyDown;
         }
 
         private void StartTimerWithDuration(int seconds)
@@ -128,6 +142,40 @@ namespace WorkoutTimerApp
             notifyIcon.Click += NotifyIcon_Click;
         }
 
+        private void ShowSilentToast(string message)
+        {
+            Form toast = new Form
+            {
+                FormBorderStyle = FormBorderStyle.None,
+                StartPosition = FormStartPosition.Manual,
+                ShowInTaskbar = false,
+                TopMost = true,
+                BackColor = Color.LightYellow,
+                Size = new Size(200, 50),
+            };
+
+            // Position it at the bottom right of the screen
+            var workingArea = Screen.PrimaryScreen.WorkingArea;
+            toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
+
+            Label lbl = new Label
+            {
+                Text = message,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 10),
+            };
+            toast.Controls.Add(lbl);
+
+            toast.Shown += async (s, e) =>
+            {
+                await Task.Delay(550); // 0.55 second
+                toast.Close();
+            };
+
+            toast.Show();
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (this.Focused || this.ContainsFocus)
@@ -166,6 +214,41 @@ namespace WorkoutTimerApp
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void GlobalHook_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control)
+            {
+                if (!isTimerRunning)
+                {
+                    switch (e.KeyCode)
+                    {
+                        case Keys.NumPad4:
+                            StartTimerWithDuration(30);
+                            ShowSilentToast("Timer: 30 sec");
+                            break;
+                        case Keys.NumPad7:
+                            StartTimerWithDuration(60);
+                            ShowSilentToast("Timer: 1 min");
+                            break;
+                        case Keys.NumPad8:
+                            StartTimerWithDuration(90);
+                            ShowSilentToast("Timer: 1:30");
+                            break;
+                        case Keys.NumPad9:
+                            StartTimerWithDuration(120);
+                            ShowSilentToast("Timer: 2 min");
+                            break;
+                    }
+                }
+
+                if (e.KeyCode == Keys.NumPad6)
+                {
+                    btnReset.PerformClick();
+                    ShowSilentToast("Timer Reset");
+                }
+            }
         }
 
         private void btnStart_Click(object sender, EventArgs e)
