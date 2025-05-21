@@ -251,6 +251,51 @@ namespace WorkoutTimerApp
             }
         }
 
+        private void ShowCustomToast(string message, bool playSound = false)
+        {
+            Form toast = new Form
+            {
+                FormBorderStyle = FormBorderStyle.None,
+                StartPosition = FormStartPosition.Manual,
+                ShowInTaskbar = false,
+                TopMost = true,
+                BackColor = Color.LightYellow,
+                Size = new Size(200, 50),
+            };
+
+            // Position at bottom right of screen
+            var workingArea = Screen.PrimaryScreen.WorkingArea;
+            toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
+
+            Label lbl = new Label
+            {
+                Text = message,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 10),
+            };
+            toast.Controls.Add(lbl);
+
+            toast.Shown += async (s, e) =>
+            {
+                if (playSound)
+                {
+                    try
+                    {
+                        // Play your audio here (e.g., your mp3 or wav sound)
+                        mp3FileReader.Position = 0;
+                        waveOut.Play();
+                    }
+                    catch { /* optionally handle errors */ }
+                }
+
+                await Task.Delay(1000); // Show for 1 second
+                toast.Close();
+            };
+
+            toast.Show();
+        }
+
         private void btnStart_Click(object sender, EventArgs e)
         {
             if (!isTimerRunning)
@@ -302,7 +347,7 @@ namespace WorkoutTimerApp
                 }
                 else
                 {
-                    ShowNotification("Workout Complete!", "Timer Finished");
+                    ShowCustomToast("Workout Complete!", playSound: true);
                 }
 
                 ResetTimer();
