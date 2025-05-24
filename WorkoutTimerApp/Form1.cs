@@ -401,6 +401,8 @@ namespace WorkoutTimerApp
         private void trackBarVolume_Scroll(object sender, EventArgs e)
         {
             waveOut.Volume = (float)trackBarVolume.Value / trackBarVolume.Maximum;
+
+            lblVolumeValue.Text = trackBarVolume.Value.ToString();
         }
 
         // Add a button for custom audio selection
@@ -453,6 +455,11 @@ namespace WorkoutTimerApp
         {
             useMessageBox = !useMessageBox;
             UpdateToggleButtonText();
+        }
+
+        private void btnMinimize_Click(object sender, EventArgs e)
+        {
+            this.WindowState = FormWindowState.Minimized;
         }
     }
 
