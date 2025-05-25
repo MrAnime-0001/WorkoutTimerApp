@@ -1,8 +1,9 @@
-using System;
-using System.Windows.Forms;
-using NAudio.Wave;
-using System.IO;
 using Gma.System.MouseKeyHook;
+using NAudio.Wave;
+using System;
+using System.Drawing.Drawing2D;
+using System.IO;
+using System.Windows.Forms;
 
 namespace WorkoutTimerApp
 {
@@ -49,6 +50,8 @@ namespace WorkoutTimerApp
             globalHook.KeyDown += GlobalHook_KeyDown;
 
             this.Load += MainForm_Load;
+
+            this.Icon = new Icon("profile.ico");
         }
 
         private void MainForm_Load(object sender, EventArgs e)

@@ -48,6 +48,8 @@ namespace WorkoutTimerApp
 
             // Set initial timer display
             UpdateTimeLabel();
+
+            this.Icon = new Icon("profile.ico");
         }
 
         // Method to pause timer when switching forms
