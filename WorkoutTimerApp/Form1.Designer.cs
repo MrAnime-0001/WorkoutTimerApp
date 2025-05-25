@@ -46,6 +46,7 @@
             btnSelectAudio = new Button();
             btnToggleNotification = new Button();
             pnlFooter = new Panel();
+            btnGoToForm2 = new Button();
             btnTopMost = new Button();
             btnMinimize = new Button();
             btnExit = new Button();
@@ -292,6 +293,7 @@
             // pnlFooter
             // 
             pnlFooter.BackColor = Color.FromArgb(30, 30, 30);
+            pnlFooter.Controls.Add(btnGoToForm2);
             pnlFooter.Controls.Add(btnTopMost);
             pnlFooter.Controls.Add(btnMinimize);
             pnlFooter.Controls.Add(btnExit);
@@ -301,6 +303,24 @@
             pnlFooter.Padding = new Padding(20, 10, 20, 15);
             pnlFooter.Size = new Size(480, 55);
             pnlFooter.TabIndex = 4;
+            // 
+            // btnGoToForm2
+            // 
+            btnGoToForm2.BackColor = Color.FromArgb(70, 70, 70);
+            btnGoToForm2.FlatAppearance.BorderSize = 0;
+            btnGoToForm2.FlatAppearance.MouseDownBackColor = Color.FromArgb(60, 60, 60);
+            btnGoToForm2.FlatAppearance.MouseOverBackColor = Color.FromArgb(90, 90, 90);
+            btnGoToForm2.FlatStyle = FlatStyle.Flat;
+            btnGoToForm2.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            btnGoToForm2.ForeColor = Color.White;
+            btnGoToForm2.Location = new Point(220, 10);
+            btnGoToForm2.Name = "btnGoToForm2";
+            btnGoToForm2.Size = new Size(94, 30);
+            btnGoToForm2.TabIndex = 3;
+            btnGoToForm2.Text = "Change Form";
+            toolTip.SetToolTip(btnGoToForm2, "Minimize to system tray");
+            btnGoToForm2.UseVisualStyleBackColor = false;
+            btnGoToForm2.Click += btnGoToForm2_Click;
             // 
             // btnTopMost
             // 
@@ -419,5 +439,6 @@
 
         // Additional components
         private ToolTip toolTip;
+        private Button btnGoToForm2;
     }
 }

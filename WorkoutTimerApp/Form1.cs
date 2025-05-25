@@ -19,6 +19,8 @@ namespace WorkoutTimerApp
 
         private bool useMessageBox = false; // Ensure notifications are the default
 
+        // Add properties to store timer state when switching forms
+        private bool wasTimerRunningBeforeSwitch = false;
 
         public MainForm()
         {
@@ -53,6 +55,72 @@ namespace WorkoutTimerApp
         {
             globalHook = Hook.GlobalEvents();
             globalHook.KeyDown += GlobalHook_KeyDown;
+        }
+
+        // Method to pause timer when switching forms
+        public void PauseTimerForFormSwitch()
+        {
+            if (isTimerRunning)
+            {
+                wasTimerRunningBeforeSwitch = true;
+                isTimerRunning = false;
+                timer1.Stop();
+            }
+            else
+            {
+                wasTimerRunningBeforeSwitch = false;
+            }
+        }
+
+        // Method to resume timer when returning to this form
+        public void ResumeTimerFromFormSwitch()
+        {
+            if (wasTimerRunningBeforeSwitch)
+            {
+                isTimerRunning = true;
+                timer1.Start();
+                wasTimerRunningBeforeSwitch = false;
+            }
+        }
+
+        // Method to get current timer state for passing to other forms
+        public TimerState GetCurrentTimerState()
+        {
+            return new TimerState
+            {
+                CurrentSeconds = currentSeconds,
+                TotalSeconds = totalSeconds,
+                IsRunning = isTimerRunning || wasTimerRunningBeforeSwitch,
+                SelectedPresetSeconds = cbPresets.SelectedItem != null ? ((TimerPreset)cbPresets.SelectedItem).Seconds : 0
+            };
+        }
+
+        // Method to set timer state from other forms
+        public void SetTimerState(TimerState state)
+        {
+            if (state != null)
+            {
+                currentSeconds = state.CurrentSeconds;
+                totalSeconds = state.TotalSeconds;
+
+                // Set the preset selection
+                if (state.SelectedPresetSeconds > 0)
+                {
+                    TimerPreset preset = GetPresetBySeconds(state.SelectedPresetSeconds);
+                    if (preset != null)
+                    {
+                        cbPresets.SelectedItem = preset;
+                    }
+                }
+
+                UpdateTimeLabel();
+                UpdateProgressBar();
+
+                if (state.IsRunning)
+                {
+                    wasTimerRunningBeforeSwitch = true;
+                }
+            }
         }
 
         private void StartTimerWithDuration(int seconds)
@@ -150,8 +218,8 @@ namespace WorkoutTimerApp
                 StartPosition = FormStartPosition.Manual,
                 ShowInTaskbar = false,
                 TopMost = true,
-                BackColor = Color.LightYellow,
-                Size = new Size(200, 50),
+                BackColor = Color.FromArgb(45, 45, 48),
+                Size = new Size(250, 60)
             };
 
             // Position it at the bottom right of the screen
@@ -163,7 +231,8 @@ namespace WorkoutTimerApp
                 Text = message,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White
             };
             toast.Controls.Add(lbl);
 
@@ -259,8 +328,8 @@ namespace WorkoutTimerApp
                 StartPosition = FormStartPosition.Manual,
                 ShowInTaskbar = false,
                 TopMost = true,
-                BackColor = Color.LightYellow,
-                Size = new Size(200, 50),
+                BackColor = Color.FromArgb(45, 45, 48),
+                Size = new Size(250, 60)
             };
 
             // Position at bottom right of screen
@@ -272,7 +341,8 @@ namespace WorkoutTimerApp
                 Text = message,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White
             };
             toast.Controls.Add(lbl);
 
@@ -379,16 +449,9 @@ namespace WorkoutTimerApp
 
         private void btnTopMost_Click(object sender, EventArgs e)
         {
-            bool isTopMost = this.TopMost;
-
-            // Toggle the TopMost property
-            this.TopMost = !isTopMost;
-
-            // Show a message box notifying the user of the change
-            string message = isTopMost ? "TopMost is now turned off." : "TopMost is now turned on.";
-            MessageBox.Show(message, "TopMost Toggled");
-
-            // Deselect the button
+            this.TopMost = !this.TopMost;
+            btnTopMost.BackColor = this.TopMost ? Color.FromArgb(156, 39, 176) : Color.FromArgb(103, 58, 183);
+            ShowCustomToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF");
             this.ActiveControl = null;
         }
 
@@ -461,6 +524,29 @@ namespace WorkoutTimerApp
         {
             this.WindowState = FormWindowState.Minimized;
         }
+
+        private void btnGoToForm2_Click(object sender, EventArgs e)
+        {
+            // Pause timer before switching
+            PauseTimerForFormSwitch();
+
+            // Get current timer state
+            TimerState currentState = GetCurrentTimerState();
+
+            Form2 form2 = new Form2();
+            // Pass current timer state to Form2
+            form2.SetTimerState(currentState);
+
+            form2.Show();
+            this.Hide();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            // Clean up global hook when form is closing
+            globalHook?.Dispose();
+            base.OnFormClosing(e);
+        }
     }
 
     public class TimerPreset
@@ -478,5 +564,14 @@ namespace WorkoutTimerApp
         {
             return Name;
         }
+    }
+
+    // Helper class to store timer state when switching forms
+    public class TimerState
+    {
+        public int CurrentSeconds { get; set; }
+        public int TotalSeconds { get; set; }
+        public bool IsRunning { get; set; }
+        public int SelectedPresetSeconds { get; set; }
     }
 }
