@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <None Remove="profile.ico" />
-    <None Remove="timer_end.mp3" />
   </ItemGroup>
 
   <ItemGroup>

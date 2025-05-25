@@ -3,6 +3,7 @@ using NAudio.Wave;
 using System;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Media;
 using System.Windows.Forms;
 
 namespace WorkoutTimerApp
@@ -186,6 +187,12 @@ namespace WorkoutTimerApp
                     filePath = Path.Combine(Application.StartupPath, "timer_end.mp3");
                 }
 
+                // Dispose of any previous audio readers to avoid duplicate playback
+                waveOut.Stop();
+                waveOut.Dispose();
+                mp3FileReader?.Dispose();
+
+                waveOut = new WaveOutEvent();
                 mp3FileReader = new AudioFileReader(filePath);
                 waveOut.Init(mp3FileReader);
             }
@@ -248,46 +255,6 @@ namespace WorkoutTimerApp
             toast.Show();
         }
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (this.Focused || this.ContainsFocus)
-            {
-                if (!isTimerRunning)
-                {
-                    switch (keyData)
-                    {
-                        case Keys.Control | Keys.D4:
-                        case Keys.Control | Keys.NumPad4:
-                            StartTimerWithDuration(30);
-                            return true;
-                        case Keys.Control | Keys.D7:
-                        case Keys.Control | Keys.NumPad7:
-                            StartTimerWithDuration(60);
-                            return true;
-                        case Keys.Control | Keys.D8:
-                        case Keys.Control | Keys.NumPad8:
-                            StartTimerWithDuration(90);
-                            return true;
-                        case Keys.Control | Keys.D9:
-                        case Keys.Control | Keys.NumPad9:
-                            StartTimerWithDuration(120);
-                            return true;
-                    }
-                }
-
-                // Allow reset regardless of whether the timer is running
-                switch (keyData)
-                {
-                    case Keys.Control | Keys.D6:
-                    case Keys.Control | Keys.NumPad6:
-                        btnReset.PerformClick(); // Simulate reset button click
-                        return true;
-                }
-            }
-
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
-
         private void GlobalHook_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control)
@@ -296,6 +263,11 @@ namespace WorkoutTimerApp
                 {
                     switch (e.KeyCode)
                     {
+                        // This is used for testing the hotkey for audio bug and etc.
+                        //case Keys.NumPad1:
+                        //    StartTimerWithDuration(5);
+                        //    ShowSilentToast("Timer: 5 sec");
+                        //    break;
                         case Keys.NumPad4:
                             StartTimerWithDuration(30);
                             ShowSilentToast("Timer: 30 sec");
@@ -411,8 +383,15 @@ namespace WorkoutTimerApp
                 isTimerRunning = false;
                 timer1.Stop();
 
-                mp3FileReader.Position = 0;
-                waveOut.Play();
+                if (mp3FileReader != null && waveOut != null)
+                {
+                    mp3FileReader.Position = 0;
+                    waveOut.Play();
+                }
+                else
+                {
+                    //SystemSounds.Beep.Play(); // fallback sound
+                }
 
                 if (useMessageBox)
                 {
@@ -420,7 +399,7 @@ namespace WorkoutTimerApp
                 }
                 else
                 {
-                    ShowCustomToast("Workout Complete!", playSound: true);
+                    ShowCustomToast("Workout Complete!", playSound: false); // avoid playing sound twice
                 }
 
                 ResetTimer();
@@ -489,14 +468,6 @@ namespace WorkoutTimerApp
             btnToggleNotification.Text = useMessageBox ? "Switch to Notification" : "Switch to Message Box";
         }
 
-        private void ShowNotification(string title, string text)
-        {
-            notifyIcon.BalloonTipTitle = title;
-            notifyIcon.BalloonTipText = text;
-            notifyIcon.Visible = true;
-            notifyIcon.ShowBalloonTip(5000); // Display for 5 seconds
-        }
-
         private void NotifyIcon_Click(object sender, EventArgs e)
         {
             // Handle the click on the notification icon
@@ -530,23 +501,43 @@ namespace WorkoutTimerApp
 
         private void btnGoToForm2_Click(object sender, EventArgs e)
         {
-            // Pause timer before switching
             PauseTimerForFormSwitch();
+
+            // Safely dispose audio resources
+            if (waveOut != null)
+            {
+                waveOut.Stop();
+                waveOut.Dispose();
+                waveOut = null;
+            }
+
+            if (mp3FileReader != null)
+            {
+                mp3FileReader.Dispose();
+                mp3FileReader = null;
+            }
+
+            // Safely dispose global hook
+            if (globalHook != null)
+            {
+                globalHook.Dispose();
+                globalHook = null;
+            }
 
             // Get current timer state
             TimerState currentState = GetCurrentTimerState();
 
             Form2 form2 = new Form2();
-            // Pass current timer state to Form2
             form2.SetTimerState(currentState);
 
             form2.Show();
             this.Hide();
+
+            this.Icon = new Icon("profile.ico");
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // Clean up global hook when form is closing
             globalHook?.Dispose();
             base.OnFormClosing(e);
         }

@@ -44,7 +44,7 @@ namespace WorkoutTimerApp
             }
 
             globalHook2 = Hook.GlobalEvents();
-            globalHook2.KeyDown += GlobalHook_KeyDown;
+            globalHook2.KeyDown += GlobalHook2_KeyDown;
 
             // Set initial timer display
             UpdateTimeLabel();
@@ -146,26 +146,24 @@ namespace WorkoutTimerApp
             try
             {
                 if (filePath == null)
+                {
                     filePath = Path.Combine(Application.StartupPath, "timer_end.mp3");
+                }
 
-                if (File.Exists(filePath))
-                {
-                    mp3FileReader = new AudioFileReader(filePath);
-                    waveOut.Init(mp3FileReader);
-                }
-                else
-                {
-                    // If file doesn't exist, we'll use system beep instead
-                    mp3FileReader = null;
-                }
+                // Dispose of any previous audio readers to avoid duplicate playback
+                waveOut.Stop();
+                waveOut.Dispose();
+                mp3FileReader?.Dispose();
+
+                waveOut = new WaveOutEvent();
+                mp3FileReader = new AudioFileReader(filePath);
+                waveOut.Init(mp3FileReader);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error initializing sound player: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                mp3FileReader = null;
             }
         }
-
         private void InitializeNotificationIcon()
         {
             notifyIcon2 = new NotifyIcon
@@ -381,7 +379,7 @@ namespace WorkoutTimerApp
             toast.Show();
         }
 
-        private void GlobalHook_KeyDown(object sender, KeyEventArgs e)
+        private void GlobalHook2_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control)
             {
@@ -389,6 +387,11 @@ namespace WorkoutTimerApp
                 {
                     switch (e.KeyCode)
                     {
+                        // This is used for testing the hotkey for audio bug and etc.
+                        //case Keys.NumPad1:
+                        //    StartTimerWithDuration(5);
+                        //    ShowCustomToast("Timer: 5 sec");
+                        //    break;
                         case Keys.NumPad4:
                             StartTimerWithDuration(30);
                             ShowCustomToast("Timer: 30 seconds");
@@ -418,17 +421,40 @@ namespace WorkoutTimerApp
 
         private void btnBack_Click(object sender, EventArgs e)
         {
-            // Pause timer before switching back
             PauseTimerForFormSwitch();
 
-            // Get current timer state
+            // Dispose audio resources to avoid overlapping playback
+            waveOut?.Stop();
+            waveOut?.Dispose();
+            waveOut = null;
+
+            mp3FileReader?.Dispose();
+            mp3FileReader = null;
+
+            // Dispose Form2 global hook to avoid duplicates
+            globalHook2?.Dispose();
+            globalHook2 = null;
+
             TimerState currentState = GetCurrentTimerState();
 
-            this.Hide();
+            this.Hide();  // or you can do this.Close(); if you want to fully close
+
             MainForm form1 = new MainForm();
-            // Pass current timer state back to Form1
             form1.SetTimerState(currentState);
             form1.Show();
+
+            this.Icon = new Icon("profile.ico");
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            timer2?.Stop();
+            globalHook2?.Dispose();
+            waveOut?.Dispose();
+            mp3FileReader?.Dispose();
+            notifyIcon2?.Dispose();
+
+            base.OnFormClosing(e);
         }
 
         private void btnExit_Click(object sender, EventArgs e)
@@ -441,18 +467,6 @@ namespace WorkoutTimerApp
             notifyIcon2?.Dispose();
 
             Application.Exit();
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            // Clean up resources when form is closing
-            timer2?.Stop();
-            globalHook2?.Dispose();
-            waveOut?.Dispose();
-            mp3FileReader?.Dispose();
-            notifyIcon2?.Dispose();
-
-            base.OnFormClosing(e);
         }
     }
 
