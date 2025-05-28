@@ -388,10 +388,10 @@ namespace WorkoutTimerApp
                     switch (e.KeyCode)
                     {
                         // This is used for testing the hotkey for audio bug and etc.
-                        //case Keys.NumPad1:
-                        //    StartTimerWithDuration(5);
-                        //    ShowCustomToast("Timer: 5 sec");
-                        //    break;
+                        case Keys.NumPad1:
+                            StartTimerWithDuration(5);
+                            ShowCustomToast("Timer: 5 sec");
+                            break;
                         case Keys.NumPad4:
                             StartTimerWithDuration(30);
                             ShowCustomToast("Timer: 30 seconds");

@@ -217,7 +217,7 @@
             Controls.Add(pnlMain);
             Name = "Form2";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Workout Timer";
+            Text = "Workout Timer Lite";
             pnlMain.ResumeLayout(false);
             pnlControls.ResumeLayout(false);
             ResumeLayout(false);

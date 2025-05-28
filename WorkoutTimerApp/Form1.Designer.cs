@@ -240,7 +240,7 @@
             trackBarVolume.TabIndex = 1;
             trackBarVolume.TickStyle = TickStyle.None;
             toolTip.SetToolTip(trackBarVolume, "Adjust notification volume");
-            trackBarVolume.Value = 25;
+            trackBarVolume.Value = 100;
             trackBarVolume.Scroll += trackBarVolume_Scroll;
             // 
             // lblVolumeValue
@@ -250,9 +250,9 @@
             lblVolumeValue.ForeColor = Color.FromArgb(100, 200, 255);
             lblVolumeValue.Location = new Point(150, 50);
             lblVolumeValue.Name = "lblVolumeValue";
-            lblVolumeValue.Size = new Size(21, 15);
+            lblVolumeValue.Size = new Size(28, 15);
             lblVolumeValue.TabIndex = 2;
-            lblVolumeValue.Text = "25";
+            lblVolumeValue.Text = "100";
             // 
             // btnSelectAudio
             // 
