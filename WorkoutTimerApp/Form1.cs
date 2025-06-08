@@ -214,10 +214,18 @@ namespace WorkoutTimerApp
 
         private void InitializeNotificationIcon()
         {
-            notifyIcon = new NotifyIcon();
-            notifyIcon.Icon = SystemIcons.Information;
-            notifyIcon.Visible = false;
-            notifyIcon.Click += NotifyIcon_Click;
+            try
+            {
+                notifyIcon = new NotifyIcon();
+                notifyIcon.Icon = new Icon("profile.ico"); // Use your custom icon
+                notifyIcon.Visible = false;
+                notifyIcon.Text = "Workout Timer";
+                notifyIcon.Click += NotifyIcon_Click;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load tray icon: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ShowSilentToast(string message)
@@ -463,9 +471,15 @@ namespace WorkoutTimerApp
             }
         }
 
-        private void UpdateToggleButtonText()
+        private void btnToggleNotification_Click(object sender, EventArgs e)
         {
-            btnToggleNotification.Text = useMessageBox ? "Switch to Notification" : "Switch to Message Box";
+            useMessageBox = !useMessageBox;
+            UpdateToggleButtonText();
+
+            string toastMessage = useMessageBox
+                ? "Message Box mode enabled."
+                : "Notification mode enabled.";
+            ShowSilentToast(toastMessage);
         }
 
         private void NotifyIcon_Click(object sender, EventArgs e)
@@ -488,15 +502,18 @@ namespace WorkoutTimerApp
             Activate();
         }
 
-        private void btnToggleNotification_Click(object sender, EventArgs e)
+        private void UpdateToggleButtonText()
         {
-            useMessageBox = !useMessageBox;
-            UpdateToggleButtonText();
+            btnToggleNotification.Text = useMessageBox
+                ? "Switch to Notification"
+                : "Switch to Message Box";
         }
 
         private void btnMinimize_Click(object sender, EventArgs e)
         {
-            this.WindowState = FormWindowState.Minimized;
+            notifyIcon.Visible = true;
+            this.Hide(); // Hide from taskbar
+            ShowSilentToast("Workout Timer is running in the background.");
         }
 
         private void btnGoToForm2_Click(object sender, EventArgs e)
