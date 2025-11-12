@@ -511,10 +511,15 @@ namespace WorkoutTimerApp
 
         private void btnMinimize_Click(object sender, EventArgs e)
         {
-            notifyIcon.Visible = true;
-            this.Hide(); // Hide from taskbar
-            ShowSilentToast("Workout Timer is running in the background.");
+
         }
+
+        //private void btnMinimize_Click(object sender, EventArgs e)
+        //{
+        //    notifyIcon.Visible = true;
+        //    this.Hide(); // Hide from taskbar
+        //    ShowSilentToast("Workout Timer is running in the background.");
+        //}
 
         private void btnGoToForm2_Click(object sender, EventArgs e)
         {
