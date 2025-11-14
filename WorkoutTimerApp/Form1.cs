@@ -50,7 +50,7 @@ namespace WorkoutTimerApp
             globalHook = Hook.GlobalEvents();
             globalHook.KeyDown += GlobalHook_KeyDown;
 
-            this.Load += MainForm_Load;
+            this.Resize += MainForm_Resize;
 
             this.Icon = new Icon("profile.ico");
         }
@@ -484,22 +484,23 @@ namespace WorkoutTimerApp
 
         private void NotifyIcon_Click(object sender, EventArgs e)
         {
-            // Handle the click on the notification icon
-            // Show the form and bring it to the front
+            // 1. Restore the taskbar icon
+            this.ShowInTaskbar = true;
 
-            if (WindowState == FormWindowState.Minimized)
+            // 2. Show the form
+            this.Show();
+
+            // 3. Bring the form out of minimized state
+            if (this.WindowState == FormWindowState.Minimized)
             {
-                WindowState = FormWindowState.Normal;
+                this.WindowState = FormWindowState.Normal;
             }
 
-            // Bring the form to the front
-            Activate();
+            // 4. Ensure it's the active window
+            this.Activate();
 
-            // Show the form
-            Show();
-
-            // Bring the form to the front again to ensure it is on top
-            Activate();
+            // 5. Hide the NotifyIcon after the form is fully back
+            notifyIcon.Visible = false;
         }
 
         private void UpdateToggleButtonText()
@@ -509,17 +510,34 @@ namespace WorkoutTimerApp
                 : "Switch to Message Box";
         }
 
-        private void btnMinimize_Click(object sender, EventArgs e)
+        // ADD THIS METHOD to your MainForm class
+        private void MainForm_Resize(object sender, EventArgs e)
         {
-
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                // When the user clicks the standard minimize button, 
+                // treat it as minimizing to the tray, just like btnMinimize_Click.
+                this.ShowInTaskbar = false;
+                notifyIcon.Visible = true;
+                this.Hide();
+                ShowSilentToast("Workout Timer is running in the background.");
+            }
         }
 
-        //private void btnMinimize_Click(object sender, EventArgs e)
-        //{
-        //    notifyIcon.Visible = true;
-        //    this.Hide(); // Hide from taskbar
-        //    ShowSilentToast("Workout Timer is running in the background.");
-        //}
+        // This replaces your currently empty btnMinimize_Click
+        private void btnMinimize_Click(object sender, EventArgs e)
+        {
+            // 1. Hide the form
+            this.Hide();
+
+            // 2. Hide the taskbar button
+            this.ShowInTaskbar = false;
+
+            // 3. Show the NotifyIcon
+            notifyIcon.Visible = true;
+
+            ShowSilentToast("Workout Timer is running in the background.");
+        }
 
         private void btnGoToForm2_Click(object sender, EventArgs e)
         {
