@@ -271,34 +271,37 @@ namespace WorkoutTimerApp
                 {
                     switch (e.KeyCode)
                     {
-                        // This is used for testing the hotkey for audio bug and etc.
-                        case Keys.NumPad1:
-                            StartTimerWithDuration(5);
-                            ShowSilentToast("Timer: 5 sec");
-                            break;
-                        case Keys.NumPad4:
+                        case Keys.NumPad1:  // Ctrl+NumPad1 = 30 seconds
                             StartTimerWithDuration(30);
-                            ShowSilentToast("Timer: 30 sec");
+                            ShowCustomToast("Timer: 30 sec");
                             break;
-                        case Keys.NumPad7:
+                        case Keys.NumPad2:  // Ctrl+NumPad2 = 1 minute
                             StartTimerWithDuration(60);
-                            ShowSilentToast("Timer: 1 min");
+                            ShowCustomToast("Timer: 1 min");
                             break;
-                        case Keys.NumPad8:
+                        case Keys.NumPad3:  // Ctrl+NumPad3 = 1:30 minutes
                             StartTimerWithDuration(90);
-                            ShowSilentToast("Timer: 1:30");
+                            ShowCustomToast("Timer: 1:30");
                             break;
-                        case Keys.NumPad9:
+                        case Keys.NumPad4:  // Ctrl+NumPad4 = 2 minutes
                             StartTimerWithDuration(120);
-                            ShowSilentToast("Timer: 2 min");
+                            ShowCustomToast("Timer: 2 min");
+                            break;
+                        case Keys.NumPad5:  // Ctrl+NumPad5 = 3 minutes
+                            StartTimerWithDuration(180);
+                            ShowCustomToast("Timer: 3 min");
+                            break;
+                        case Keys.NumPad6:  // Ctrl+NumPad6 = 5 minutes
+                            StartTimerWithDuration(300);
+                            ShowCustomToast("Timer: 5 min");
                             break;
                     }
                 }
 
-                if (e.KeyCode == Keys.NumPad6)
+                if (e.KeyCode == Keys.NumPad0)  // Ctrl+NumPad0 = Reset
                 {
-                    btnReset.PerformClick();
-                    ShowSilentToast("Timer Reset");
+                    btnReset_Click(null, null);
+                    ShowCustomToast("Timer Reset");
                 }
             }
         }
