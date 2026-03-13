@@ -158,8 +158,6 @@ namespace WorkoutTimerApp
         {
             // Add your preset workout and rest periods
             cbPresets.Items.Add(new TimerPreset("5 Seconds", 5));
-            cbPresets.Items.Add(new TimerPreset("10 Seconds", 10));
-            cbPresets.Items.Add(new TimerPreset("20 Seconds", 20));
             cbPresets.Items.Add(new TimerPreset("30 Seconds", 30));
             cbPresets.Items.Add(new TimerPreset("1 Minute", 60));
             cbPresets.Items.Add(new TimerPreset("1 Minute, 30 Seconds", 90));
@@ -173,9 +171,6 @@ namespace WorkoutTimerApp
             cbPresets.Items.Add(new TimerPreset("2 Hours", 7200));
             cbPresets.Items.Add(new TimerPreset("3 Hours", 10800));
             cbPresets.Items.Add(new TimerPreset("5 Hours", 18000));
-            cbPresets.Items.Add(new TimerPreset("10 Hours", 36000));
-            cbPresets.Items.Add(new TimerPreset("12 Hours", 43200));
-            cbPresets.Items.Add(new TimerPreset("24 Hours", 86400));
         }
 
         private void InitializeSoundPlayer(string filePath = null)
