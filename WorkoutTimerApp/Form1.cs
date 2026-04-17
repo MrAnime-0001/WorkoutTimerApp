@@ -1,209 +1,46 @@
 using Gma.System.MouseKeyHook;
 using NAudio.Wave;
 using System;
-using System.Drawing.Drawing2D;
+using System.Drawing;
 using System.IO;
-using System.Media;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace WorkoutTimerApp
 {
     public partial class MainForm : Form
     {
-        private int currentSeconds;
-        private int totalSeconds;
-        private bool isTimerRunning;
-        private WaveOutEvent waveOut;
-        private AudioFileReader mp3FileReader;
-        private System.Windows.Forms.Timer timer1;
-        private NotifyIcon notifyIcon;
-        private IKeyboardMouseEvents globalHook;
-
-        private bool useMessageBox = false; // Ensure notifications are the default
-
-        // Add properties to store timer state when switching forms
-        private bool wasTimerRunningBeforeSwitch = false;
+        private WorkoutTimerManager _timerManager;
+        private NotifyIcon _notifyIcon;
+        private bool _useMessageBox = false;
 
         public MainForm()
         {
             InitializeComponent();
+            _timerManager = new WorkoutTimerManager();
+            _timerManager.Tick += (s, e) => UpdateUI();
+            _timerManager.TimerFinished += OnTimerFinished;
+            _timerManager.ShortcutTriggered += OnShortcutTriggered;
+            _timerManager.ResetTriggered += (s, e) => btnReset_Click(null, null);
+
             InitializePresets();
             InitializeNotificationIcon();
 
-            timer1 = new System.Windows.Forms.Timer();
-            timer1.Interval = 1000; // Interval in milliseconds (1 second)
-            timer1.Tick += Timer1_Tick;
-
-            waveOut = new WaveOutEvent();
-            InitializeSoundPlayer();
-
-            // Find and set the TimerPreset with 30 seconds as the default selection
+            // Default preset
             TimerPreset defaultPreset = GetPresetBySeconds(30);
-            if (defaultPreset != null)
-            {
-                cbPresets.SelectedItem = defaultPreset;
-            }
+            if (defaultPreset != null) cbPresets.SelectedItem = defaultPreset;
 
-            // Ensure the toggle button reflects the default notification mode
             UpdateToggleButtonText();
-
-            globalHook = Hook.GlobalEvents();
-            globalHook.KeyDown += GlobalHook_KeyDown;
-
             this.Resize += MainForm_Resize;
-
             this.Icon = new Icon("profile.ico");
-        }
-
-        private void MainForm_Load(object sender, EventArgs e)
-        {
-            globalHook = Hook.GlobalEvents();
-            globalHook.KeyDown += GlobalHook_KeyDown;
-        }
-
-        // Method to pause timer when switching forms
-        public void PauseTimerForFormSwitch()
-        {
-            if (isTimerRunning)
-            {
-                wasTimerRunningBeforeSwitch = true;
-                isTimerRunning = false;
-                timer1.Stop();
-            }
-            else
-            {
-                wasTimerRunningBeforeSwitch = false;
-            }
-        }
-
-        // Method to resume timer when returning to this form
-        public void ResumeTimerFromFormSwitch()
-        {
-            if (wasTimerRunningBeforeSwitch)
-            {
-                isTimerRunning = true;
-                timer1.Start();
-                wasTimerRunningBeforeSwitch = false;
-            }
-        }
-
-        // Method to get current timer state for passing to other forms
-        public TimerState GetCurrentTimerState()
-        {
-            return new TimerState
-            {
-                CurrentSeconds = currentSeconds,
-                TotalSeconds = totalSeconds,
-                IsRunning = isTimerRunning || wasTimerRunningBeforeSwitch,
-                SelectedPresetSeconds = cbPresets.SelectedItem != null ? ((TimerPreset)cbPresets.SelectedItem).Seconds : 0
-            };
-        }
-
-        // Method to set timer state from other forms
-        public void SetTimerState(TimerState state)
-        {
-            if (state != null)
-            {
-                currentSeconds = state.CurrentSeconds;
-                totalSeconds = state.TotalSeconds;
-
-                // Set the preset selection
-                if (state.SelectedPresetSeconds > 0)
-                {
-                    TimerPreset preset = GetPresetBySeconds(state.SelectedPresetSeconds);
-                    if (preset != null)
-                    {
-                        cbPresets.SelectedItem = preset;
-                    }
-                }
-
-                UpdateTimeLabel();
-                UpdateProgressBar();
-
-                if (state.IsRunning)
-                {
-                    wasTimerRunningBeforeSwitch = true;
-                }
-            }
-        }
-
-        private void StartTimerWithDuration(int seconds)
-        {
-            TimerPreset preset = GetPresetBySeconds(seconds);
-            if (preset != null)
-            {
-                cbPresets.SelectedItem = preset;
-                totalSeconds = preset.Seconds;
-                currentSeconds = totalSeconds;
-                UpdateProgressBar();
-                isTimerRunning = true;
-                timer1.Start();
-                UpdateTimeLabel();
-            }
-        }
-
-        private TimerPreset GetPresetBySeconds(int seconds)
-        {
-            foreach (TimerPreset preset in cbPresets.Items)
-            {
-                if (preset.Seconds == seconds)
-                {
-                    return preset;
-                }
-            }
-            return null;
         }
 
         private void InitializePresets()
         {
-            // Add your preset workout and rest periods
-            cbPresets.Items.Add(new TimerPreset("5 Seconds", 5));
-            cbPresets.Items.Add(new TimerPreset("30 Seconds", 30));
-            cbPresets.Items.Add(new TimerPreset("1 Minute", 60));
-            cbPresets.Items.Add(new TimerPreset("1 Minute, 30 Seconds", 90));
-            cbPresets.Items.Add(new TimerPreset("2 Minutes", 120));
-            cbPresets.Items.Add(new TimerPreset("3 Minutes", 180));
-            cbPresets.Items.Add(new TimerPreset("5 Minutes", 300));
-            cbPresets.Items.Add(new TimerPreset("10 Minutes", 600));
-            cbPresets.Items.Add(new TimerPreset("20 Minutes", 1200));
-            cbPresets.Items.Add(new TimerPreset("30 Minutes", 1800));
-            cbPresets.Items.Add(new TimerPreset("1 Hour", 3600));
-            cbPresets.Items.Add(new TimerPreset("2 Hours", 7200));
-            cbPresets.Items.Add(new TimerPreset("3 Hours", 10800));
-            cbPresets.Items.Add(new TimerPreset("5 Hours", 18000));
-        }
-
-        private void InitializeSoundPlayer(string filePath = null)
-        {
-            try
+            cbPresets.Items.Clear();
+            foreach (var preset in TimerPreset.GetDefaultPresets())
             {
-                if (filePath == null)
-                {
-                    filePath = Path.Combine(Application.StartupPath, "timer_end.mp3");
-                }
-
-                // Dispose of any previous audio readers to avoid duplicate playback
-                waveOut.Stop();
-                waveOut.Dispose();
-                mp3FileReader?.Dispose();
-
-                waveOut = new WaveOutEvent();
-                mp3FileReader = new AudioFileReader(filePath);
-                waveOut.Init(mp3FileReader);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error initializing sound player: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // Add a ProgressBar for visual countdown
-        private void UpdateProgressBar()
-        {
-            if (totalSeconds > 0)
-            {
-                int progress = (int)(((double)currentSeconds / totalSeconds) * progressBar.Maximum);
-                progressBar.Value = progress;
+                cbPresets.Items.Add(preset);
             }
         }
 
@@ -211,11 +48,13 @@ namespace WorkoutTimerApp
         {
             try
             {
-                notifyIcon = new NotifyIcon();
-                notifyIcon.Icon = new Icon("profile.ico"); // Use your custom icon
-                notifyIcon.Visible = false;
-                notifyIcon.Text = "Workout Timer";
-                notifyIcon.Click += NotifyIcon_Click;
+                _notifyIcon = new NotifyIcon
+                {
+                    Icon = new Icon("profile.ico"),
+                    Visible = false,
+                    Text = "Workout Timer"
+                };
+                _notifyIcon.Click += NotifyIcon_Click;
             }
             catch (Exception ex)
             {
@@ -223,216 +62,78 @@ namespace WorkoutTimerApp
             }
         }
 
-        private void ShowSilentToast(string message)
+        private void OnShortcutTriggered(object sender, int seconds)
         {
-            Form toast = new Form
+            TimerPreset preset = GetPresetBySeconds(seconds);
+            if (preset != null)
             {
-                FormBorderStyle = FormBorderStyle.None,
-                StartPosition = FormStartPosition.Manual,
-                ShowInTaskbar = false,
-                TopMost = true,
-                BackColor = Color.FromArgb(45, 45, 48),
-                Size = new Size(250, 60)
-            };
-
-            // Position it at the bottom right of the screen
-            var workingArea = Screen.PrimaryScreen.WorkingArea;
-            toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
-
-            Label lbl = new Label
-            {
-                Text = message,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.White
-            };
-            toast.Controls.Add(lbl);
-
-            toast.Shown += async (s, e) =>
-            {
-                await Task.Delay(550); // 0.55 second
-                toast.Close();
-            };
-
-            toast.Show();
-        }
-
-        private void GlobalHook_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Alt)
-            {
-                if (!isTimerRunning)
-                {
-                    switch (e.KeyCode)
-                    {
-                        case Keys.NumPad1:  // Ctrl+NumPad1 = 30 seconds
-                            StartTimerWithDuration(30);
-                            ShowCustomToast("Timer: 30 sec");
-                            break;
-                        case Keys.NumPad2:  // Ctrl+NumPad2 = 1 minute
-                            StartTimerWithDuration(60);
-                            ShowCustomToast("Timer: 1 min");
-                            break;
-                        case Keys.NumPad3:  // Ctrl+NumPad3 = 1:30 minutes
-                            StartTimerWithDuration(90);
-                            ShowCustomToast("Timer: 1:30");
-                            break;
-                        case Keys.NumPad4:  // Ctrl+NumPad4 = 2 minutes
-                            StartTimerWithDuration(120);
-                            ShowCustomToast("Timer: 2 min");
-                            break;
-                        case Keys.NumPad5:  // Ctrl+NumPad5 = 3 minutes
-                            StartTimerWithDuration(180);
-                            ShowCustomToast("Timer: 3 min");
-                            break;
-                        case Keys.NumPad6:  // Ctrl+NumPad6 = 5 minutes
-                            StartTimerWithDuration(300);
-                            ShowCustomToast("Timer: 5 min");
-                            break;
-                    }
-                }
-
-                if (e.KeyCode == Keys.NumPad0)  // Ctrl+NumPad0 = Reset
-                {
-                    btnReset_Click(null, null);
-                    ShowCustomToast("Timer Reset");
-                }
+                cbPresets.SelectedItem = preset;
+                _timerManager.Start(seconds);
+                ShowCustomToast($"Timer: {preset.Name}");
+                UpdateUI();
             }
         }
 
-        private void ShowCustomToast(string message, bool playSound = false)
+        private void OnTimerFinished(object sender, EventArgs e)
         {
-            Form toast = new Form
-            {
-                FormBorderStyle = FormBorderStyle.None,
-                StartPosition = FormStartPosition.Manual,
-                ShowInTaskbar = false,
-                TopMost = true,
-                BackColor = Color.FromArgb(45, 45, 48),
-                Size = new Size(250, 60)
-            };
-
-            // Position at bottom right of screen
-            var workingArea = Screen.PrimaryScreen.WorkingArea;
-            toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
-
-            Label lbl = new Label
-            {
-                Text = message,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.White
-            };
-            toast.Controls.Add(lbl);
-
-            toast.Shown += async (s, e) =>
-            {
-                if (playSound)
-                {
-                    try
-                    {
-                        // Play your audio here (e.g., your mp3 or wav sound)
-                        mp3FileReader.Position = 0;
-                        waveOut.Play();
-                    }
-                    catch { /* optionally handle errors */ }
-                }
-
-                await Task.Delay(1000); // Show for 1 second
-                toast.Close();
-            };
-
-            toast.Show();
-        }
-
-        private void btnStart_Click(object sender, EventArgs e)
-        {
-            if (!isTimerRunning)
-            {
-                UpdateProgressBar();
-                isTimerRunning = true;
-                totalSeconds = ((TimerPreset)cbPresets.SelectedItem).Seconds;
-                currentSeconds = totalSeconds;
-                timer1.Start();
-                UpdateTimeLabel();
-            }
-        }
-
-        private void btnPause_Click(object sender, EventArgs e)
-        {
-            isTimerRunning = false;
-            timer1.Stop();
-        }
-
-        private void btnReset_Click(object sender, EventArgs e)
-        {
-            isTimerRunning = false;
-            timer1.Stop();
-            currentSeconds = totalSeconds;
-            UpdateTimeLabel();
-            lblTime.Text = "Timer: 00:00:00";
-            UpdateProgressBar();
-        }
-
-        private void Timer1_Tick(object sender, EventArgs e)
-        {
-            if (currentSeconds > 0)
-            {
-                currentSeconds--;
-                UpdateTimeLabel();
-                UpdateProgressBar();
-            }
+            if (_useMessageBox)
+                MessageBox.Show("Workout Complete!", "Timer Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
-            {
-                isTimerRunning = false;
-                timer1.Stop();
+                ShowCustomToast("Workout Complete!");
 
-                if (mp3FileReader != null && waveOut != null)
-                {
-                    mp3FileReader.Position = 0;
-                    waveOut.Play();
-                }
-                else
-                {
-                    //SystemSounds.Beep.Play(); // fallback sound
-                }
-
-                if (useMessageBox)
-                {
-                    MessageBox.Show("Workout Complete!", "Timer Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    ShowCustomToast("Workout Complete!", playSound: false); // avoid playing sound twice
-                }
-
-                ResetTimer();
-            }
+            UpdateUI();
         }
 
-        private void ResetTimer()
+        private void UpdateUI()
         {
-            isTimerRunning = false;
-            currentSeconds = totalSeconds;
             UpdateTimeLabel();
+            UpdateProgressBar();
         }
 
         private void UpdateTimeLabel()
         {
             if (cbPresets.SelectedItem != null)
             {
-                int hours = currentSeconds / 3600;
-                int minutes = (currentSeconds % 3600) / 60;
-                int seconds = currentSeconds % 60;
-
+                int total = _timerManager.CurrentSeconds;
+                int hours = total / 3600;
+                int minutes = (total % 3600) / 60;
+                int seconds = total % 60;
                 lblTime.Text = $"Timer: {hours:D2}:{minutes:D2}:{seconds:D2}";
             }
             else
             {
                 lblTime.Text = "Timer: Not Set";
             }
+        }
+
+        private void UpdateProgressBar()
+        {
+            if (_timerManager.TotalSeconds > 0)
+            {
+                int progress = (int)(((double)_timerManager.CurrentSeconds / _timerManager.TotalSeconds) * progressBar.Maximum);
+                progressBar.Value = Math.Max(0, Math.Min(progressBar.Maximum, progress));
+            }
+        }
+
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            if (!_timerManager.IsRunning && cbPresets.SelectedItem is TimerPreset preset)
+            {
+                _timerManager.Start(preset.Seconds);
+                UpdateUI();
+            }
+        }
+
+        private void btnPause_Click(object sender, EventArgs e)
+        {
+            _timerManager.Pause();
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            _timerManager.Reset();
+            UpdateUI();
+            if (_timerManager.TotalSeconds == 0) lblTime.Text = "Timer: 00:00:00";
         }
 
         private void btnTopMost_Click(object sender, EventArgs e)
@@ -443,167 +144,149 @@ namespace WorkoutTimerApp
             this.ActiveControl = null;
         }
 
-        private void btnExit_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-
-        // Add a TrackBar for volume control
-        private void trackBarVolume_Scroll(object sender, EventArgs e)
-        {
-            waveOut.Volume = (float)trackBarVolume.Value / trackBarVolume.Maximum;
-
-            lblVolumeValue.Text = trackBarVolume.Value.ToString();
-        }
-
-        // Add a button for custom audio selection
-        private void btnSelectAudio_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Audio Files|*.mp3;*.wav|All Files|*.*";
-
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                string selectedFilePath = openFileDialog.FileName;
-                InitializeSoundPlayer(selectedFilePath);
-            }
-        }
-
         private void btnToggleNotification_Click(object sender, EventArgs e)
         {
-            useMessageBox = !useMessageBox;
+            _useMessageBox = !_useMessageBox;
             UpdateToggleButtonText();
-
-            string toastMessage = useMessageBox
-                ? "Message Box mode enabled."
-                : "Notification mode enabled.";
-            ShowSilentToast(toastMessage);
-        }
-
-        private void NotifyIcon_Click(object sender, EventArgs e)
-        {
-            // 1. Restore the taskbar icon
-            this.ShowInTaskbar = true;
-
-            // 2. Show the form
-            this.Show();
-
-            // 3. Bring the form out of minimized state
-            if (this.WindowState == FormWindowState.Minimized)
-            {
-                this.WindowState = FormWindowState.Normal;
-            }
-
-            // 4. Ensure it's the active window
-            this.Activate();
-
-            // 5. Hide the NotifyIcon after the form is fully back
-            notifyIcon.Visible = false;
+            ShowSilentToast(_useMessageBox ? "Message Box mode enabled." : "Notification mode enabled.");
         }
 
         private void UpdateToggleButtonText()
         {
-            btnToggleNotification.Text = useMessageBox
-                ? "Switch to Notification"
-                : "Switch to Message Box";
+            btnToggleNotification.Text = _useMessageBox ? "Switch to Notification" : "Switch to Message Box";
         }
 
-        // ADD THIS METHOD to your MainForm class
+        private void btnSelectAudio_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog { Filter = "Audio Files|*.mp3;*.wav|All Files|*.*" };
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                _timerManager.InitializeSoundPlayer(openFileDialog.FileName);
+            }
+        }
+
+        private void trackBarVolume_Scroll(object sender, EventArgs e)
+        {
+            _timerManager.Volume = (float)trackBarVolume.Value / trackBarVolume.Maximum;
+            lblVolumeValue.Text = trackBarVolume.Value.ToString();
+        }
+
+        private void NotifyIcon_Click(object sender, EventArgs e)
+        {
+            this.ShowInTaskbar = true;
+            this.Show();
+            if (this.WindowState == FormWindowState.Minimized) this.WindowState = FormWindowState.Normal;
+            this.Activate();
+            _notifyIcon.Visible = false;
+        }
+
         private void MainForm_Resize(object sender, EventArgs e)
         {
             if (this.WindowState == FormWindowState.Minimized)
             {
-                // When the user clicks the standard minimize button, 
-                // treat it as minimizing to the tray, just like btnMinimize_Click.
                 this.ShowInTaskbar = false;
-                notifyIcon.Visible = true;
+                _notifyIcon.Visible = true;
                 this.Hide();
                 ShowSilentToast("Workout Timer is running in the background.");
             }
         }
 
-        // This replaces your currently empty btnMinimize_Click
         private void btnMinimize_Click(object sender, EventArgs e)
         {
-            // 1. Hide the form
             this.Hide();
-
-            // 2. Hide the taskbar button
             this.ShowInTaskbar = false;
-
-            // 3. Show the NotifyIcon
-            notifyIcon.Visible = true;
-
+            _notifyIcon.Visible = true;
             ShowSilentToast("Workout Timer is running in the background.");
+        }
+
+        private void ShowCustomToast(string message)
+        {
+            ShowToast(message, 1000);
+        }
+
+        private void ShowSilentToast(string message)
+        {
+            ShowToast(message, 550);
+        }
+
+        private void ShowToast(string message, int durationMs)
+        {
+            Form toast = new Form
+            {
+                FormBorderStyle = FormBorderStyle.None,
+                StartPosition = FormStartPosition.Manual,
+                ShowInTaskbar = false,
+                TopMost = true,
+                BackColor = Color.FromArgb(45, 45, 48),
+                Size = new Size(250, 60)
+            };
+
+            var workingArea = Screen.PrimaryScreen.WorkingArea;
+            toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
+
+            Label lbl = new Label
+            {
+                Text = message,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White
+            };
+            toast.Controls.Add(lbl);
+
+            toast.Shown += async (s, e) =>
+            {
+                await Task.Delay(durationMs);
+                toast.Close();
+            };
+            toast.Show();
+        }
+
+        private TimerPreset GetPresetBySeconds(int seconds)
+        {
+            foreach (TimerPreset preset in cbPresets.Items)
+            {
+                if (preset.Seconds == seconds) return preset;
+            }
+            return null;
+        }
+
+        public void SetTimerState(TimerState state)
+        {
+            if (state == null) return;
+            _timerManager.SetState(state);
+            if (state.SelectedPresetSeconds > 0)
+            {
+                TimerPreset preset = GetPresetBySeconds(state.SelectedPresetSeconds);
+                if (preset != null) cbPresets.SelectedItem = preset;
+            }
+            UpdateUI();
+        }
+
+        public TimerState GetCurrentTimerState()
+        {
+            int selectedSeconds = cbPresets.SelectedItem is TimerPreset p ? p.Seconds : 0;
+            return _timerManager.GetState(selectedSeconds);
         }
 
         private void btnGoToForm2_Click(object sender, EventArgs e)
         {
-            PauseTimerForFormSwitch();
-
-            // Safely dispose audio resources
-            if (waveOut != null)
-            {
-                waveOut.Stop();
-                waveOut.Dispose();
-                waveOut = null;
-            }
-
-            if (mp3FileReader != null)
-            {
-                mp3FileReader.Dispose();
-                mp3FileReader = null;
-            }
-
-            // Safely dispose global hook
-            if (globalHook != null)
-            {
-                globalHook.Dispose();
-                globalHook = null;
-            }
-
-            // Get current timer state
             TimerState currentState = GetCurrentTimerState();
+            _timerManager.Dispose();
 
             Form2 form2 = new Form2();
             form2.SetTimerState(currentState);
-
             form2.Show();
             this.Hide();
-
-            this.Icon = new Icon("profile.ico");
         }
+
+        private void btnExit_Click(object sender, EventArgs e) => Close();
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            globalHook?.Dispose();
+            _timerManager?.Dispose();
+            _notifyIcon?.Dispose();
             base.OnFormClosing(e);
         }
-    }
-
-    public class TimerPreset
-    {
-        public string Name { get; set; }
-        public int Seconds { get; set; }
-
-        public TimerPreset(string name, int seconds)
-        {
-            Name = name;
-            Seconds = seconds;
-        }
-
-        public override string ToString()
-        {
-            return Name;
-        }
-    }
-
-    // Helper class to store timer state when switching forms
-    public class TimerState
-    {
-        public int CurrentSeconds { get; set; }
-        public int TotalSeconds { get; set; }
-        public bool IsRunning { get; set; }
-        public int SelectedPresetSeconds { get; set; }
     }
 }
