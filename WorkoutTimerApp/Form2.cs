@@ -3,6 +3,8 @@ using NAudio.Wave;
 using System;
 using System.Drawing;
 using System.IO;
+using System.Media;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,6 +15,12 @@ namespace WorkoutTimerApp
         private WorkoutTimerManager _timerManager;
         private NotifyIcon _notifyIcon;
         private bool _useMessageBox = false;
+
+        // P/Invoke for dragging
+        [DllImport("user32.dll")]
+        public static extern bool ReleaseCapture();
+        [DllImport("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
         public Form2()
         {
@@ -31,6 +39,19 @@ namespace WorkoutTimerApp
 
             UpdateUI();
             this.Icon = new Icon("profile.ico");
+
+            // Setup dragging for the header
+            pnlHeader2.MouseDown += DragForm;
+            lblTitle2.MouseDown += DragForm;
+        }
+
+        private void DragForm(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(Handle, 0xA1, 0x2, 0);
+            }
         }
 
         private void InitializePresets()
@@ -60,7 +81,7 @@ namespace WorkoutTimerApp
             {
                 cbPresets2.SelectedItem = preset;
                 _timerManager.Start(seconds);
-                ShowCustomToast($"Timer: {preset.Name}");
+                NotificationHelper.ShowToast($"Timer: {preset.Name}", 2000);
                 UpdateUI();
             }
         }
@@ -70,7 +91,7 @@ namespace WorkoutTimerApp
             if (_useMessageBox)
                 MessageBox.Show("Workout Complete!", "Timer Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
-                ShowCustomToast("Workout Complete!");
+                NotificationHelper.ShowToast("Workout Complete!", 2000);
 
             UpdateUI();
         }
@@ -111,9 +132,22 @@ namespace WorkoutTimerApp
         private void btnTopMost_Click(object sender, EventArgs e)
         {
             this.TopMost = !this.TopMost;
-            btnTopMost2.BackColor = this.TopMost ? Color.FromArgb(156, 39, 176) : Color.FromArgb(103, 58, 183);
-            ShowCustomToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF");
+            btnTopMost2.BackColor = this.TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
+            NotificationHelper.ShowToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF", 2000);
             this.ActiveControl = null;
+        }
+
+        // Add dragging for borderless form
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg == 0x84) // WM_NCHITTEST
+            {
+                if ((int)m.Result == 0x1) // HTCLIENT
+                {
+                    m.Result = (IntPtr)0x2; // HTCAPTION
+                }
+            }
         }
 
         private void NotifyIcon_Click(object sender, EventArgs e)
@@ -122,40 +156,6 @@ namespace WorkoutTimerApp
             this.Show();
             this.Activate();
             this.BringToFront();
-        }
-
-        private void ShowCustomToast(string message)
-        {
-            Form toast = new Form
-            {
-                FormBorderStyle = FormBorderStyle.None,
-                StartPosition = FormStartPosition.Manual,
-                ShowInTaskbar = false,
-                TopMost = true,
-                BackColor = Color.FromArgb(45, 45, 48),
-                Size = new Size(250, 60)
-            };
-
-            Label lbl = new Label
-            {
-                Text = message,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.White
-            };
-            toast.Controls.Add(lbl);
-
-            toast.Location = new Point(
-                Screen.PrimaryScreen.WorkingArea.Right - toast.Width - 10,
-                Screen.PrimaryScreen.WorkingArea.Bottom - toast.Height - 10);
-
-            toast.Shown += async (s, e) =>
-            {
-                await Task.Delay(2000);
-                toast.Close();
-            };
-            toast.Show();
         }
 
         private TimerPreset GetPresetBySeconds(int seconds)

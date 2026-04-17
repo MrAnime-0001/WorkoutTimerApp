@@ -3,6 +3,8 @@ using NAudio.Wave;
 using System;
 using System.Drawing;
 using System.IO;
+using System.Media;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,6 +15,12 @@ namespace WorkoutTimerApp
         private WorkoutTimerManager _timerManager;
         private NotifyIcon _notifyIcon;
         private bool _useMessageBox = false;
+
+        // P/Invoke for dragging
+        [DllImport("user32.dll")]
+        public static extern bool ReleaseCapture();
+        [DllImport("user32.dll")]
+        public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
         public MainForm()
         {
@@ -33,6 +41,19 @@ namespace WorkoutTimerApp
             UpdateToggleButtonText();
             this.Resize += MainForm_Resize;
             this.Icon = new Icon("profile.ico");
+
+            // Setup dragging for the header
+            pnlHeader.MouseDown += DragForm;
+            lblPresetName.MouseDown += DragForm;
+        }
+
+        private void DragForm(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseCapture();
+                SendMessage(Handle, 0xA1, 0x2, 0);
+            }
         }
 
         private void InitializePresets()
@@ -69,7 +90,7 @@ namespace WorkoutTimerApp
             {
                 cbPresets.SelectedItem = preset;
                 _timerManager.Start(seconds);
-                ShowCustomToast($"Timer: {preset.Name}");
+                NotificationHelper.ShowToast($"Timer: {preset.Name}", 1000);
                 UpdateUI();
             }
         }
@@ -79,7 +100,7 @@ namespace WorkoutTimerApp
             if (_useMessageBox)
                 MessageBox.Show("Workout Complete!", "Timer Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
-                ShowCustomToast("Workout Complete!");
+                NotificationHelper.ShowToast("Workout Complete!", 1000);
 
             UpdateUI();
         }
@@ -139,8 +160,9 @@ namespace WorkoutTimerApp
         private void btnTopMost_Click(object sender, EventArgs e)
         {
             this.TopMost = !this.TopMost;
-            btnTopMost.BackColor = this.TopMost ? Color.FromArgb(156, 39, 176) : Color.FromArgb(103, 58, 183);
-            ShowCustomToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF");
+            btnTopMost.BackColor = this.TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
+            btnTopMost.Text = this.TopMost ? "Unpin Window" : "Pin Window";
+            NotificationHelper.ShowToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF", 1000);
             this.ActiveControl = null;
         }
 
@@ -148,12 +170,25 @@ namespace WorkoutTimerApp
         {
             _useMessageBox = !_useMessageBox;
             UpdateToggleButtonText();
-            ShowSilentToast(_useMessageBox ? "Message Box mode enabled." : "Notification mode enabled.");
+            NotificationHelper.ShowToast(_useMessageBox ? "Message Box mode enabled." : "Notification mode enabled.", 550, false);
         }
 
         private void UpdateToggleButtonText()
         {
-            btnToggleNotification.Text = _useMessageBox ? "Switch to Notification" : "Switch to Message Box";
+            btnToggleNotification.Text = _useMessageBox ? "Mode: Message Box" : "Mode: Notification";
+        }
+
+        // Add dragging for borderless form
+        protected override void WndProc(ref Message m)
+        {
+            base.WndProc(ref m);
+            if (m.Msg == 0x84) // WM_NCHITTEST
+            {
+                if ((int)m.Result == 0x1) // HTCLIENT
+                {
+                    m.Result = (IntPtr)0x2; // HTCAPTION
+                }
+            }
         }
 
         private void btnSelectAudio_Click(object sender, EventArgs e)
@@ -187,7 +222,7 @@ namespace WorkoutTimerApp
                 this.ShowInTaskbar = false;
                 _notifyIcon.Visible = true;
                 this.Hide();
-                ShowSilentToast("Workout Timer is running in the background.");
+                NotificationHelper.ShowToast("Workout Timer is running in the background.", 550, false);
             }
         }
 
@@ -196,50 +231,7 @@ namespace WorkoutTimerApp
             this.Hide();
             this.ShowInTaskbar = false;
             _notifyIcon.Visible = true;
-            ShowSilentToast("Workout Timer is running in the background.");
-        }
-
-        private void ShowCustomToast(string message)
-        {
-            ShowToast(message, 1000);
-        }
-
-        private void ShowSilentToast(string message)
-        {
-            ShowToast(message, 550);
-        }
-
-        private void ShowToast(string message, int durationMs)
-        {
-            Form toast = new Form
-            {
-                FormBorderStyle = FormBorderStyle.None,
-                StartPosition = FormStartPosition.Manual,
-                ShowInTaskbar = false,
-                TopMost = true,
-                BackColor = Color.FromArgb(45, 45, 48),
-                Size = new Size(250, 60)
-            };
-
-            var workingArea = Screen.PrimaryScreen.WorkingArea;
-            toast.Location = new Point(workingArea.Right - toast.Width - 10, workingArea.Bottom - toast.Height - 10);
-
-            Label lbl = new Label
-            {
-                Text = message,
-                Dock = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.White
-            };
-            toast.Controls.Add(lbl);
-
-            toast.Shown += async (s, e) =>
-            {
-                await Task.Delay(durationMs);
-                toast.Close();
-            };
-            toast.Show();
+            NotificationHelper.ShowToast("Workout Timer is running in the background.", 550, false);
         }
 
         private TimerPreset GetPresetBySeconds(int seconds)

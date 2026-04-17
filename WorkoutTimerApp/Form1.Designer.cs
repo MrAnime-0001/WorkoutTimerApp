@@ -61,7 +61,7 @@
             // 
             // pnlHeader
             // 
-            pnlHeader.BackColor = Color.FromArgb(25, 25, 25);
+            pnlHeader.BackColor = Color.FromArgb(30, 30, 30);
             pnlHeader.Controls.Add(lblPresetName);
             pnlHeader.Dock = DockStyle.Top;
             pnlHeader.Location = new Point(0, 0);
@@ -74,13 +74,13 @@
             // 
             lblPresetName.AutoSize = true;
             lblPresetName.Dock = DockStyle.Left;
-            lblPresetName.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point);
-            lblPresetName.ForeColor = Color.FromArgb(100, 200, 255);
+            lblPresetName.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold, GraphicsUnit.Point);
+            lblPresetName.ForeColor = Color.White;
             lblPresetName.Location = new Point(15, 10);
             lblPresetName.Name = "lblPresetName";
-            lblPresetName.Size = new Size(140, 21);
+            lblPresetName.Size = new Size(149, 21);
             lblPresetName.TabIndex = 0;
-            lblPresetName.Text = "Select a Workout";
+            lblPresetName.Text = "Workout Timer Pro";
             lblPresetName.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // pnlTimerDisplay
@@ -99,30 +99,30 @@
             // 
             lblTime.Anchor = AnchorStyles.Top;
             lblTime.AutoSize = true;
-            lblTime.Font = new Font("Consolas", 28F, FontStyle.Bold, GraphicsUnit.Point);
-            lblTime.ForeColor = Color.FromArgb(100, 255, 150);
-            lblTime.Location = new Point(130, 25);
+            lblTime.Font = new Font("Consolas", 36F, FontStyle.Bold, GraphicsUnit.Point);
+            lblTime.ForeColor = Color.FromArgb(0, 122, 204);
+            lblTime.Location = new Point(33, 15);
             lblTime.Name = "lblTime";
-            lblTime.Size = new Size(188, 45);
+            lblTime.Size = new Size(414, 56);
             lblTime.TabIndex = 0;
-            lblTime.Text = "00:00:00";
+            lblTime.Text = "Timer: 00:00:00";
             lblTime.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // progressBar
             // 
             progressBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar.BackColor = Color.FromArgb(35, 35, 35);
-            progressBar.ForeColor = Color.FromArgb(100, 200, 255);
-            progressBar.Location = new Point(20, 80);
+            progressBar.BackColor = Color.FromArgb(40, 40, 40);
+            progressBar.ForeColor = Color.FromArgb(0, 122, 204);
+            progressBar.Location = new Point(20, 85);
             progressBar.Name = "progressBar";
-            progressBar.Size = new Size(440, 8);
+            progressBar.Size = new Size(440, 6);
             progressBar.Style = ProgressBarStyle.Continuous;
             progressBar.TabIndex = 1;
             progressBar.Value = 100;
             // 
             // pnlControls
             // 
-            pnlControls.BackColor = Color.FromArgb(22, 22, 22);
+            pnlControls.BackColor = Color.FromArgb(25, 25, 25);
             pnlControls.Controls.Add(cbPresets);
             pnlControls.Controls.Add(btnStart);
             pnlControls.Controls.Add(btnPause);
@@ -136,75 +136,69 @@
             // 
             // cbPresets
             // 
-            cbPresets.BackColor = Color.FromArgb(35, 35, 35);
+            cbPresets.BackColor = Color.FromArgb(45, 45, 45);
             cbPresets.DropDownStyle = ComboBoxStyle.DropDownList;
             cbPresets.FlatStyle = FlatStyle.Flat;
-            cbPresets.Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
+            cbPresets.Font = new Font("Segoe UI", 11F, FontStyle.Regular, GraphicsUnit.Point);
             cbPresets.ForeColor = Color.White;
             cbPresets.FormattingEnabled = true;
-            cbPresets.Location = new Point(20, 15);
+            cbPresets.Location = new Point(20, 25);
             cbPresets.Name = "cbPresets";
-            cbPresets.Size = new Size(200, 25);
+            cbPresets.Size = new Size(200, 28);
             cbPresets.TabIndex = 0;
             toolTip.SetToolTip(cbPresets, "Select a workout preset");
             // 
             // btnStart
             // 
-            btnStart.BackColor = Color.FromArgb(50, 150, 50);
+            btnStart.BackColor = Color.FromArgb(0, 122, 204);
             btnStart.FlatAppearance.BorderSize = 0;
-            btnStart.FlatAppearance.MouseDownBackColor = Color.FromArgb(40, 120, 40);
-            btnStart.FlatAppearance.MouseOverBackColor = Color.FromArgb(60, 180, 60);
             btnStart.FlatStyle = FlatStyle.Flat;
             btnStart.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
             btnStart.ForeColor = Color.White;
-            btnStart.Location = new Point(240, 15);
+            btnStart.Location = new Point(235, 15);
             btnStart.Name = "btnStart";
-            btnStart.Size = new Size(70, 50);
+            btnStart.Size = new Size(75, 50);
             btnStart.TabIndex = 1;
-            btnStart.Text = "▶ Start";
+            btnStart.Text = "START";
             toolTip.SetToolTip(btnStart, "Start the timer");
             btnStart.UseVisualStyleBackColor = false;
             btnStart.Click += btnStart_Click;
             // 
             // btnPause
             // 
-            btnPause.BackColor = Color.FromArgb(200, 120, 50);
+            btnPause.BackColor = Color.FromArgb(60, 60, 60);
             btnPause.FlatAppearance.BorderSize = 0;
-            btnPause.FlatAppearance.MouseDownBackColor = Color.FromArgb(160, 100, 40);
-            btnPause.FlatAppearance.MouseOverBackColor = Color.FromArgb(220, 140, 70);
             btnPause.FlatStyle = FlatStyle.Flat;
             btnPause.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
             btnPause.ForeColor = Color.White;
-            btnPause.Location = new Point(320, 15);
+            btnPause.Location = new Point(315, 15);
             btnPause.Name = "btnPause";
-            btnPause.Size = new Size(70, 50);
+            btnPause.Size = new Size(75, 50);
             btnPause.TabIndex = 2;
-            btnPause.Text = "⏸ Pause";
+            btnPause.Text = "PAUSE";
             toolTip.SetToolTip(btnPause, "Pause/Resume the timer");
             btnPause.UseVisualStyleBackColor = false;
             btnPause.Click += btnPause_Click;
             // 
             // btnReset
             // 
-            btnReset.BackColor = Color.FromArgb(180, 50, 50);
+            btnReset.BackColor = Color.FromArgb(60, 60, 60);
             btnReset.FlatAppearance.BorderSize = 0;
-            btnReset.FlatAppearance.MouseDownBackColor = Color.FromArgb(140, 40, 40);
-            btnReset.FlatAppearance.MouseOverBackColor = Color.FromArgb(200, 70, 70);
             btnReset.FlatStyle = FlatStyle.Flat;
             btnReset.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
             btnReset.ForeColor = Color.White;
-            btnReset.Location = new Point(400, 15);
+            btnReset.Location = new Point(395, 15);
             btnReset.Name = "btnReset";
-            btnReset.Size = new Size(70, 50);
+            btnReset.Size = new Size(65, 50);
             btnReset.TabIndex = 3;
-            btnReset.Text = "⟲ Reset";
+            btnReset.Text = "RESET";
             toolTip.SetToolTip(btnReset, "Reset the timer");
             btnReset.UseVisualStyleBackColor = false;
             btnReset.Click += btnReset_Click;
             // 
             // pnlSettings
             // 
-            pnlSettings.BackColor = Color.FromArgb(25, 25, 25);
+            pnlSettings.BackColor = Color.FromArgb(18, 18, 18);
             pnlSettings.Controls.Add(lblVolumeText);
             pnlSettings.Controls.Add(trackBarVolume);
             pnlSettings.Controls.Add(lblVolumeValue);
@@ -221,7 +215,7 @@
             // 
             lblVolumeText.AutoSize = true;
             lblVolumeText.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            lblVolumeText.ForeColor = Color.FromArgb(180, 180, 180);
+            lblVolumeText.ForeColor = Color.DarkGray;
             lblVolumeText.Location = new Point(20, 15);
             lblVolumeText.Name = "lblVolumeText";
             lblVolumeText.Size = new Size(47, 15);
@@ -230,7 +224,6 @@
             // 
             // trackBarVolume
             // 
-            trackBarVolume.BackColor = Color.FromArgb(25, 25, 25);
             trackBarVolume.LargeChange = 25;
             trackBarVolume.Location = new Point(20, 35);
             trackBarVolume.Maximum = 100;
@@ -247,8 +240,8 @@
             // 
             lblVolumeValue.AutoSize = true;
             lblVolumeValue.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-            lblVolumeValue.ForeColor = Color.FromArgb(100, 200, 255);
-            lblVolumeValue.Location = new Point(150, 50);
+            lblVolumeValue.ForeColor = Color.FromArgb(0, 122, 204);
+            lblVolumeValue.Location = new Point(145, 40);
             lblVolumeValue.Name = "lblVolumeValue";
             lblVolumeValue.Size = new Size(28, 15);
             lblVolumeValue.TabIndex = 2;
@@ -256,10 +249,8 @@
             // 
             // btnSelectAudio
             // 
-            btnSelectAudio.BackColor = Color.FromArgb(60, 60, 60);
+            btnSelectAudio.BackColor = Color.FromArgb(45, 45, 45);
             btnSelectAudio.FlatAppearance.BorderSize = 0;
-            btnSelectAudio.FlatAppearance.MouseDownBackColor = Color.FromArgb(50, 50, 50);
-            btnSelectAudio.FlatAppearance.MouseOverBackColor = Color.FromArgb(80, 80, 80);
             btnSelectAudio.FlatStyle = FlatStyle.Flat;
             btnSelectAudio.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             btnSelectAudio.ForeColor = Color.White;
@@ -267,17 +258,15 @@
             btnSelectAudio.Name = "btnSelectAudio";
             btnSelectAudio.Size = new Size(110, 35);
             btnSelectAudio.TabIndex = 3;
-            btnSelectAudio.Text = "🔊 Change Audio";
+            btnSelectAudio.Text = "Audio Settings";
             toolTip.SetToolTip(btnSelectAudio, "Select custom notification sound");
             btnSelectAudio.UseVisualStyleBackColor = false;
             btnSelectAudio.Click += btnSelectAudio_Click;
             // 
             // btnToggleNotification
             // 
-            btnToggleNotification.BackColor = Color.FromArgb(60, 60, 60);
+            btnToggleNotification.BackColor = Color.FromArgb(45, 45, 45);
             btnToggleNotification.FlatAppearance.BorderSize = 0;
-            btnToggleNotification.FlatAppearance.MouseDownBackColor = Color.FromArgb(50, 50, 50);
-            btnToggleNotification.FlatAppearance.MouseOverBackColor = Color.FromArgb(80, 80, 80);
             btnToggleNotification.FlatStyle = FlatStyle.Flat;
             btnToggleNotification.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             btnToggleNotification.ForeColor = Color.White;
@@ -285,7 +274,7 @@
             btnToggleNotification.Name = "btnToggleNotification";
             btnToggleNotification.Size = new Size(140, 35);
             btnToggleNotification.TabIndex = 4;
-            btnToggleNotification.Text = "💬 Message Box Mode";
+            btnToggleNotification.Text = "Mode: Notification";
             toolTip.SetToolTip(btnToggleNotification, "Toggle notification style");
             btnToggleNotification.UseVisualStyleBackColor = false;
             btnToggleNotification.Click += btnToggleNotification_Click;
@@ -306,28 +295,24 @@
             // 
             // btnGoToForm2
             // 
-            btnGoToForm2.BackColor = Color.FromArgb(70, 70, 70);
+            btnGoToForm2.BackColor = Color.FromArgb(45, 45, 45);
             btnGoToForm2.FlatAppearance.BorderSize = 0;
-            btnGoToForm2.FlatAppearance.MouseDownBackColor = Color.FromArgb(60, 60, 60);
-            btnGoToForm2.FlatAppearance.MouseOverBackColor = Color.FromArgb(90, 90, 90);
             btnGoToForm2.FlatStyle = FlatStyle.Flat;
             btnGoToForm2.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             btnGoToForm2.ForeColor = Color.White;
-            btnGoToForm2.Location = new Point(220, 10);
+            btnGoToForm2.Location = new Point(200, 10);
             btnGoToForm2.Name = "btnGoToForm2";
-            btnGoToForm2.Size = new Size(94, 30);
+            btnGoToForm2.Size = new Size(100, 30);
             btnGoToForm2.TabIndex = 3;
-            btnGoToForm2.Text = "Change Form";
-            toolTip.SetToolTip(btnGoToForm2, "Minimize to system tray");
+            btnGoToForm2.Text = "Switch to Lite";
+            toolTip.SetToolTip(btnGoToForm2, "Switch to compact view");
             btnGoToForm2.UseVisualStyleBackColor = false;
             btnGoToForm2.Click += btnGoToForm2_Click;
             // 
             // btnTopMost
             // 
-            btnTopMost.BackColor = Color.FromArgb(70, 70, 70);
+            btnTopMost.BackColor = Color.FromArgb(45, 45, 45);
             btnTopMost.FlatAppearance.BorderSize = 0;
-            btnTopMost.FlatAppearance.MouseDownBackColor = Color.FromArgb(60, 60, 60);
-            btnTopMost.FlatAppearance.MouseOverBackColor = Color.FromArgb(90, 90, 90);
             btnTopMost.FlatStyle = FlatStyle.Flat;
             btnTopMost.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             btnTopMost.ForeColor = Color.White;
@@ -335,35 +320,31 @@
             btnTopMost.Name = "btnTopMost";
             btnTopMost.Size = new Size(80, 30);
             btnTopMost.TabIndex = 0;
-            btnTopMost.Text = "📌 Pin";
+            btnTopMost.Text = "Pin Window";
             toolTip.SetToolTip(btnTopMost, "Keep window always on top");
             btnTopMost.UseVisualStyleBackColor = false;
             btnTopMost.Click += btnTopMost_Click;
             // 
             // btnMinimize
             // 
-            btnMinimize.BackColor = Color.FromArgb(70, 70, 70);
+            btnMinimize.BackColor = Color.FromArgb(45, 45, 45);
             btnMinimize.FlatAppearance.BorderSize = 0;
-            btnMinimize.FlatAppearance.MouseDownBackColor = Color.FromArgb(60, 60, 60);
-            btnMinimize.FlatAppearance.MouseOverBackColor = Color.FromArgb(90, 90, 90);
             btnMinimize.FlatStyle = FlatStyle.Flat;
             btnMinimize.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             btnMinimize.ForeColor = Color.White;
-            btnMinimize.Location = new Point(320, 10);
+            btnMinimize.Location = new Point(310, 10);
             btnMinimize.Name = "btnMinimize";
-            btnMinimize.Size = new Size(70, 30);
+            btnMinimize.Size = new Size(80, 30);
             btnMinimize.TabIndex = 1;
-            btnMinimize.Text = "➖ Min";
+            btnMinimize.Text = "Minimize";
             toolTip.SetToolTip(btnMinimize, "Minimize to system tray");
             btnMinimize.UseVisualStyleBackColor = false;
             btnMinimize.Click += btnMinimize_Click;
             // 
             // btnExit
             // 
-            btnExit.BackColor = Color.FromArgb(150, 50, 50);
+            btnExit.BackColor = Color.FromArgb(200, 0, 0);
             btnExit.FlatAppearance.BorderSize = 0;
-            btnExit.FlatAppearance.MouseDownBackColor = Color.FromArgb(120, 40, 40);
-            btnExit.FlatAppearance.MouseOverBackColor = Color.FromArgb(180, 70, 70);
             btnExit.FlatStyle = FlatStyle.Flat;
             btnExit.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             btnExit.ForeColor = Color.White;
@@ -371,7 +352,7 @@
             btnExit.Name = "btnExit";
             btnExit.Size = new Size(60, 30);
             btnExit.TabIndex = 2;
-            btnExit.Text = "✕ Exit";
+            btnExit.Text = "EXIT";
             toolTip.SetToolTip(btnExit, "Close application");
             btnExit.UseVisualStyleBackColor = false;
             btnExit.Click += btnExit_Click;
@@ -387,7 +368,7 @@
             Controls.Add(pnlControls);
             Controls.Add(pnlTimerDisplay);
             Controls.Add(pnlHeader);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
+            FormBorderStyle = FormBorderStyle.None;
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "MainForm";
