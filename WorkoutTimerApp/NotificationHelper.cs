@@ -8,53 +8,69 @@ namespace WorkoutTimerApp
 {
     public static class NotificationHelper
     {
-        public static void ShowToast(string message, int duration = 2000, bool playSound = true)
+        public static void ShowToast(
+            string message,
+            int duration = 2000,
+            bool playSound = true
+        )
         {
+            // CONFIG
+            Size size = new Size(250, 60);
+            Color backColor = Color.Black;
+            Color textColor = Color.White;
+            double opacity = 0.9;
+            int margin = 10;
+
+            // CREATE FORM
             Form toast = new Form
             {
-                FormBorderStyle = FormBorderStyle.None,
+                FormBorderStyle = FormBorderStyle.FixedToolWindow,
                 StartPosition = FormStartPosition.Manual,
                 ShowInTaskbar = false,
                 TopMost = true,
-                BackColor = Color.Black,
-                Size = new Size(250, 60),
-                Opacity = 0.9
+                ControlBox = false,
+                Text = string.Empty,
+                BackColor = backColor,
+                Size = size,
+                Opacity = opacity
             };
 
-            // Hides from alt-tab by setting the form as a tool window
-            toast.FormBorderStyle = FormBorderStyle.FixedToolWindow;
-            toast.ShowInTaskbar = false;
-
+            // LABEL
             toast.Controls.Add(new Label
             {
                 Text = message,
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = Color.White,
+                ForeColor = textColor,
                 BackColor = Color.Transparent
             });
 
+            // POSITION (SCREEN)
             var screen = Screen.PrimaryScreen.WorkingArea;
-            toast.Location = new Point(screen.Right - toast.Width - 10, screen.Bottom - toast.Height - 10);
+            toast.Location = new Point(
+                screen.Right - toast.Width - margin,
+                screen.Bottom - toast.Height - margin
+            );
 
+            // BEHAVIOUR
             toast.Shown += async (s, e) =>
             {
                 if (playSound)
-                {
                     SystemSounds.Exclamation.Play();
-                }
 
                 await Task.Delay(duration);
 
-                // Fade out
                 for (double i = toast.Opacity; i >= 0; i -= 0.05)
                 {
+                    if (toast.IsDisposed) break;
+
                     toast.Invoke((Action)(() => toast.Opacity = i));
                     await Task.Delay(20);
                 }
 
-                toast.Invoke((Action)(() => toast.Close()));
+                if (!toast.IsDisposed)
+                    toast.Invoke((Action)(() => toast.Close()));
             };
 
             toast.Show();
