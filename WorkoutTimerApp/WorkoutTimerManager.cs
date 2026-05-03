@@ -17,7 +17,8 @@ namespace WorkoutTimerApp
 
         public int CurrentSeconds { get; private set; }
         public int TotalSeconds { get; private set; }
-        public bool IsRunning { get; private set; }
+        public TimerStatus Status { get; private set; } = TimerStatus.Idle;
+        public bool IsRunning => Status == TimerStatus.Running;
         public float Volume
         {
             get => _waveOut?.Volume ?? 1.0f;
@@ -94,28 +95,31 @@ namespace WorkoutTimerApp
         {
             TotalSeconds = seconds;
             CurrentSeconds = seconds;
-            IsRunning = true;
+            Status = TimerStatus.Running;
             _timer.Start();
         }
 
         public void Pause()
         {
-            IsRunning = false;
-            _timer.Stop();
+            if (Status == TimerStatus.Running)
+            {
+                Status = TimerStatus.Paused;
+                _timer.Stop();
+            }
         }
 
         public void Resume()
         {
-            if (CurrentSeconds > 0)
+            if (Status == TimerStatus.Paused && CurrentSeconds > 0)
             {
-                IsRunning = true;
+                Status = TimerStatus.Running;
                 _timer.Start();
             }
         }
 
         public void Reset()
         {
-            IsRunning = false;
+            Status = TimerStatus.Idle;
             _timer.Stop();
             CurrentSeconds = TotalSeconds;
         }
@@ -145,7 +149,7 @@ namespace WorkoutTimerApp
 
         private void StopAndNotify()
         {
-            IsRunning = false;
+            Status = TimerStatus.Idle;
             _timer.Stop();
             PlaySound();
             TimerFinished?.Invoke(this, EventArgs.Empty);
@@ -204,7 +208,7 @@ namespace WorkoutTimerApp
             {
                 CurrentSeconds = CurrentSeconds,
                 TotalSeconds = TotalSeconds,
-                IsRunning = IsRunning,
+                Status = Status,
                 SelectedPresetSeconds = selectedPresetSeconds
             };
         }
@@ -215,9 +219,9 @@ namespace WorkoutTimerApp
             {
                 CurrentSeconds = state.CurrentSeconds;
                 TotalSeconds = state.TotalSeconds;
-                if (state.IsRunning)
+                Status = state.Status;
+                if (Status == TimerStatus.Running)
                 {
-                    IsRunning = true;
                     _timer.Start();
                 }
             }
