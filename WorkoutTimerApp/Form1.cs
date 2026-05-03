@@ -14,6 +14,7 @@ namespace WorkoutTimerApp
     {
         private WorkoutTimerManager _timerManager;
         private NotifyIcon _notifyIcon;
+        private ToolTip _toolTip;
         private bool _useMessageBox = false;
 
         // P/Invoke for dragging
@@ -45,6 +46,12 @@ namespace WorkoutTimerApp
             // Setup dragging for the header
             pnlHeader.MouseDown += DragForm;
             lblPresetName.MouseDown += DragForm;
+
+            // Hotkey indicator tooltips
+            _toolTip = new ToolTip { AutoPopDelay = 8000, InitialDelay = 400 };
+            _toolTip.SetToolTip(btnStart, "Start timer\nHotkeys: Alt+Num1=30s | Alt+Num2=1m | Alt+Num3=90s\n         Alt+Num4=2m | Alt+Num5=3m | Alt+Num6=5m");
+            _toolTip.SetToolTip(btnPause, "Pause or Resume the running timer (toggle)");
+            _toolTip.SetToolTip(btnReset, "Reset timer to full duration\nHotkey: Alt+Num0");
         }
 
         private void DragForm(object sender, MouseEventArgs e)
@@ -109,6 +116,32 @@ namespace WorkoutTimerApp
         {
             UpdateTimeLabel();
             UpdateProgressBar();
+            UpdateButtonStates();
+        }
+
+        private void UpdateButtonStates()
+        {
+            switch (_timerManager.Status)
+            {
+                case TimerStatus.Idle:
+                    btnStart.Enabled = true;
+                    btnPause.Enabled = false;
+                    btnPause.Text = "Pause";
+                    btnReset.Enabled = _timerManager.TotalSeconds > 0 && _timerManager.CurrentSeconds < _timerManager.TotalSeconds;
+                    break;
+                case TimerStatus.Running:
+                    btnStart.Enabled = false;
+                    btnPause.Enabled = true;
+                    btnPause.Text = "Pause";
+                    btnReset.Enabled = true;
+                    break;
+                case TimerStatus.Paused:
+                    btnStart.Enabled = false;
+                    btnPause.Enabled = true;
+                    btnPause.Text = "Resume";
+                    btnReset.Enabled = true;
+                    break;
+            }
         }
 
         private void UpdateTimeLabel()
@@ -138,7 +171,7 @@ namespace WorkoutTimerApp
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            if (!_timerManager.IsRunning && cbPresets.SelectedItem is TimerPreset preset)
+            if (_timerManager.Status == TimerStatus.Idle && cbPresets.SelectedItem is TimerPreset preset)
             {
                 _timerManager.Start(preset.Seconds);
                 UpdateUI();
@@ -147,12 +180,29 @@ namespace WorkoutTimerApp
 
         private void btnPause_Click(object sender, EventArgs e)
         {
-            _timerManager.Pause();
+            if (_timerManager.Status == TimerStatus.Running)
+                _timerManager.Pause();
+            else if (_timerManager.Status == TimerStatus.Paused)
+                _timerManager.Resume();
+            UpdateUI();
         }
 
-        private void btnReset_Click(object sender, EventArgs e)
+        private async void btnReset_Click(object sender, EventArgs e)
         {
             _timerManager.Reset();
+            
+            if (sender == null)
+            {
+                NotificationHelper.ShowToast("Timer Reset!", 1000);
+            }
+            lblTime.ForeColor = Color.Red;
+            lblTime.Text = "RESET!";
+            UpdateButtonStates();
+            UpdateProgressBar();
+            
+            await Task.Delay(500);
+            
+            lblTime.ForeColor = Color.FromArgb(0, 122, 204);
             UpdateUI();
             if (_timerManager.TotalSeconds == 0) lblTime.Text = "Timer: 00:00:00";
         }
