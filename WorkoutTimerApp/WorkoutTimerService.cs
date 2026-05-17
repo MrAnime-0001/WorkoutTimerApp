@@ -3,34 +3,35 @@ using System.IO;
 using System.Windows.Forms;
 using NAudio.Wave;
 using Gma.System.MouseKeyHook;
-using System.Drawing;
 
 namespace WorkoutTimerApp
 {
-    public class WorkoutTimerManager : IDisposable
+    public class WorkoutTimerService : IDisposable
     {
         private System.Windows.Forms.Timer _timer;
         private WaveOutEvent _waveOut;
-        private AudioFileReader _audioReader;
+        private AudioFileReader? _audioReader;
         private IKeyboardMouseEvents _globalHook;
-        private string _soundFilePath;
+        private string? _soundFilePath;
 
         public int CurrentSeconds { get; private set; }
         public int TotalSeconds { get; private set; }
         public TimerStatus Status { get; private set; } = TimerStatus.Idle;
         public bool IsRunning => Status == TimerStatus.Running;
+
         public float Volume
         {
             get => _waveOut?.Volume ?? 1.0f;
             set { if (_waveOut != null) _waveOut.Volume = value; }
         }
 
-        public event EventHandler Tick;
-        public event EventHandler TimerFinished;
-        public event EventHandler<int> ShortcutTriggered;
-        public event EventHandler ResetTriggered;
+        public event EventHandler? Tick;
+        public event EventHandler? TimerFinished;
+        public event EventHandler? StatusChanged;
+        public event EventHandler<int>? ShortcutTriggered;
+        public event EventHandler? ResetTriggered;
 
-        public WorkoutTimerManager()
+        public WorkoutTimerService()
         {
             _timer = new System.Windows.Forms.Timer { Interval = 1000 };
             _timer.Tick += OnTimerTick;
@@ -42,43 +43,30 @@ namespace WorkoutTimerApp
             _globalHook.KeyDown += OnGlobalKeyDown;
         }
 
-        public void InitializeSoundPlayer(string filePath = null)
+        public void InitializeSoundPlayer(string? filePath = null)
         {
             try
             {
                 if (string.IsNullOrEmpty(filePath))
                 {
-                    // Look for the sound file in multiple locations
                     string[] possiblePaths = new string[]
                     {
                         Path.Combine(Application.StartupPath, "timer_end.mp3"),
                         Path.Combine(Application.StartupPath, "timer_end v2.mp3"),
                         "timer_end.mp3"
                     };
-
                     foreach (var path in possiblePaths)
                     {
-                        if (File.Exists(path))
-                        {
-                            filePath = path;
-                            break;
-                        }
+                        if (File.Exists(path)) { filePath = path; break; }
                     }
                 }
-                
-                if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
-                {
-                    // If still not found, we'll use system beep
-                    return;
-                }
+                if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
 
                 _soundFilePath = filePath;
-
                 float currentVolume = Volume;
                 _waveOut?.Stop();
                 _waveOut?.Dispose();
                 _audioReader?.Dispose();
-
                 _waveOut = new WaveOutEvent();
                 _audioReader = new AudioFileReader(filePath);
                 _waveOut.Init(_audioReader);
@@ -86,7 +74,6 @@ namespace WorkoutTimerApp
             }
             catch (Exception ex)
             {
-                // Log or handle error silently if it's a non-critical issue
                 Console.WriteLine($"Error initializing sound player: {ex.Message}");
             }
         }
@@ -95,7 +82,7 @@ namespace WorkoutTimerApp
         {
             TotalSeconds = seconds;
             CurrentSeconds = seconds;
-            Status = TimerStatus.Running;
+            SetStatus(TimerStatus.Running);
             _timer.Start();
         }
 
@@ -103,7 +90,7 @@ namespace WorkoutTimerApp
         {
             if (Status == TimerStatus.Running)
             {
-                Status = TimerStatus.Paused;
+                SetStatus(TimerStatus.Paused);
                 _timer.Stop();
             }
         }
@@ -112,29 +99,31 @@ namespace WorkoutTimerApp
         {
             if (Status == TimerStatus.Paused && CurrentSeconds > 0)
             {
-                Status = TimerStatus.Running;
+                SetStatus(TimerStatus.Running);
                 _timer.Start();
             }
         }
 
         public void Reset()
         {
-            Status = TimerStatus.Idle;
+            SetStatus(TimerStatus.Idle);
             _timer.Stop();
             CurrentSeconds = TotalSeconds;
         }
 
-        public void SetCurrentSeconds(int seconds)
+        public void SetCurrentSeconds(int seconds) => CurrentSeconds = seconds;
+        public void SetTotalSeconds(int seconds) => TotalSeconds = seconds;
+
+        private void SetStatus(TimerStatus newStatus)
         {
-            CurrentSeconds = seconds;
+            if (Status != newStatus)
+            {
+                Status = newStatus;
+                StatusChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
 
-        public void SetTotalSeconds(int seconds)
-        {
-            TotalSeconds = seconds;
-        }
-
-        private void OnTimerTick(object sender, EventArgs e)
+        private void OnTimerTick(object? sender, EventArgs e)
         {
             if (CurrentSeconds > 0)
             {
@@ -149,7 +138,7 @@ namespace WorkoutTimerApp
 
         private void StopAndNotify()
         {
-            Status = TimerStatus.Idle;
+            SetStatus(TimerStatus.Idle);
             _timer.Stop();
             PlaySound();
             TimerFinished?.Invoke(this, EventArgs.Empty);
@@ -175,7 +164,7 @@ namespace WorkoutTimerApp
             }
         }
 
-        private void OnGlobalKeyDown(object sender, KeyEventArgs e)
+        private void OnGlobalKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Alt)
             {
@@ -189,41 +178,10 @@ namespace WorkoutTimerApp
                     case Keys.NumPad5: duration = 180; break;
                     case Keys.NumPad6: duration = 300; break;
                 }
-
                 if (duration > 0 && !IsRunning)
-                {
                     ShortcutTriggered?.Invoke(this, duration);
-                }
-
                 if (e.KeyCode == Keys.NumPad0)
-                {
                     ResetTriggered?.Invoke(this, EventArgs.Empty);
-                }
-            }
-        }
-
-        public TimerState GetState(int selectedPresetSeconds = 0)
-        {
-            return new TimerState
-            {
-                CurrentSeconds = CurrentSeconds,
-                TotalSeconds = TotalSeconds,
-                Status = Status,
-                SelectedPresetSeconds = selectedPresetSeconds
-            };
-        }
-
-        public void SetState(TimerState state)
-        {
-            if (state != null)
-            {
-                CurrentSeconds = state.CurrentSeconds;
-                TotalSeconds = state.TotalSeconds;
-                Status = state.Status;
-                if (Status == TimerStatus.Running)
-                {
-                    _timer.Start();
-                }
             }
         }
 

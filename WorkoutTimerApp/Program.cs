@@ -1,17 +1,22 @@
+using System.Windows.Forms;
+
 namespace WorkoutTimerApp
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm());
+
+            var timerService = new WorkoutTimerService();
+            var trayController = new TrayController(timerService);
+
+            var mainForm = new MainForm(timerService, trayController);
+            trayController.SetActiveForm(mainForm);
+            mainForm.Show();
+
+            Application.Run();
         }
     }
 }
