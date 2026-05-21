@@ -48,9 +48,6 @@ namespace WorkoutTimerApp
             _toolTip.SetToolTip(btnReset, "Reset timer to full duration\nHotkey: Alt+Num0");
             _toolTip.SetToolTip(cbPresets, "Pick a preset or type custom time (MM:SS or seconds)");
 
-            cbPresets.DropDownStyle = ComboBoxStyle.DropDown;
-            cbPresets.KeyPress += cbPresets_KeyPress;
-            cbPresets.Leave += cbPresets_Leave;
         }
 
         private void DragForm(object? sender, MouseEventArgs e)
@@ -194,26 +191,6 @@ namespace WorkoutTimerApp
             return null;
         }
 
-        private void cbPresets_KeyPress(object? sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Enter)
-            {
-                e.Handled = true;
-                btnStart_Click(sender, e);
-            }
-        }
-
-        private void cbPresets_Leave(object? sender, EventArgs e)
-        {
-            // Validate custom input on focus loss
-            if (cbPresets.SelectedItem is not TimerPreset && !string.IsNullOrWhiteSpace(cbPresets.Text))
-            {
-                int? seconds = ParseCustomTime(cbPresets.Text);
-                if (seconds == null && cbPresets.Items.Count > 0)
-                    cbPresets.SelectedIndex = 0;
-            }
-        }
-
         private void btnPause_Click(object sender, EventArgs e)
         {
             if (_timerService.Status == TimerStatus.Running)
@@ -257,6 +234,16 @@ namespace WorkoutTimerApp
         private void UpdateToggleButtonText()
         {
             btnToggleNotification.Text = _useMessageBox ? "Mode: Message Box" : "Mode: Notification";
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x00040000; // WS_EX_APPWINDOW — force taskbar button
+                return cp;
+            }
         }
 
         protected override void WndProc(ref Message m)

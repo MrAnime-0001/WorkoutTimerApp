@@ -7,7 +7,7 @@ namespace WorkoutTimerApp
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        private System.Windows.Forms.ComboBox cbPresets2;
+        private ReverseScrollComboBox cbPresets2;
         private System.Windows.Forms.Label lblTime2;
         private System.Windows.Forms.Button btnStart2;
         private System.Windows.Forms.Button btnPause2;
@@ -44,7 +44,7 @@ namespace WorkoutTimerApp
             pnlHeader2 = new System.Windows.Forms.Panel();
             lblTitle2 = new System.Windows.Forms.Label();
             pnlMain = new System.Windows.Forms.Panel();
-            cbPresets2 = new System.Windows.Forms.ComboBox();
+            cbPresets2 = new ReverseScrollComboBox();
             lblTime2 = new System.Windows.Forms.Label();
             pnlControls = new System.Windows.Forms.Panel();
             btnStart2 = new System.Windows.Forms.Button();

@@ -48,9 +48,6 @@ namespace WorkoutTimerApp
             _toolTip.SetToolTip(btnReset2, "Reset timer to full duration\nHotkey: Alt+Num0");
             _toolTip.SetToolTip(cbPresets2, "Pick a preset or type custom time (MM:SS or seconds)");
 
-            cbPresets2.DropDownStyle = ComboBoxStyle.DropDown;
-            cbPresets2.KeyPress += cbPresets_KeyPress;
-            cbPresets2.Leave += cbPresets_Leave;
         }
 
         private void DragForm(object? sender, MouseEventArgs e)
@@ -175,25 +172,6 @@ namespace WorkoutTimerApp
             return null;
         }
 
-        private void cbPresets_KeyPress(object? sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Enter)
-            {
-                e.Handled = true;
-                btnStart_Click(sender, e);
-            }
-        }
-
-        private void cbPresets_Leave(object? sender, EventArgs e)
-        {
-            if (cbPresets2.SelectedItem is not TimerPreset && !string.IsNullOrWhiteSpace(cbPresets2.Text))
-            {
-                int? seconds = ParseCustomTime(cbPresets2.Text);
-                if (seconds == null && cbPresets2.Items.Count > 0)
-                    cbPresets2.SelectedIndex = 0;
-            }
-        }
-
         private void btnPause_Click(object sender, EventArgs e)
         {
             if (_timerService.Status == TimerStatus.Running)
@@ -222,6 +200,16 @@ namespace WorkoutTimerApp
             btnTopMost2.BackColor = this.TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
             NotificationHelper.ShowToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF", 2000);
             this.ActiveControl = null;
+        }
+
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x00040000; // WS_EX_APPWINDOW — force taskbar button
+                return cp;
+            }
         }
 
         protected override void WndProc(ref Message m)

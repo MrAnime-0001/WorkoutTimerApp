@@ -35,7 +35,7 @@
             lblTime = new Label();
             progressBar = new ProgressBar();
             pnlControls = new Panel();
-            cbPresets = new ComboBox();
+            cbPresets = new ReverseScrollComboBox();
             btnStart = new Button();
             btnPause = new Button();
             btnReset = new Button();
@@ -401,7 +401,7 @@
         private Label lblPresetName;
 
         // Main controls
-        private ComboBox cbPresets;
+        private ReverseScrollComboBox cbPresets;
         private Button btnStart;
         private Button btnPause;
         private Button btnReset;
