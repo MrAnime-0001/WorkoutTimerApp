@@ -7,6 +7,9 @@ namespace WorkoutTimerApp
     public class ReverseScrollComboBox : ComboBox
     {
         private const int WM_MOUSEWHEEL = 0x020A;
+        private const int WM_KEYDOWN = 0x0100;
+        private const int VK_UP = 0x26;
+        private const int VK_DOWN = 0x28;
 
         protected override void WndProc(ref Message m)
         {
@@ -19,6 +22,19 @@ namespace WorkoutTimerApp
                 if (newIndex != SelectedIndex)
                     SelectedIndex = newIndex;
                 return;
+            }
+            if (m.Msg == WM_KEYDOWN && Items.Count > 0)
+            {
+                int vk = m.WParam.ToInt32();
+                if (vk == VK_UP || vk == VK_DOWN)
+                {
+                    int step = vk == VK_UP ? 1 : -1;
+                    int current = SelectedIndex < 0 ? 0 : SelectedIndex;
+                    int newIndex = Math.Max(0, Math.Min(Items.Count - 1, current + step));
+                    if (newIndex != SelectedIndex)
+                        SelectedIndex = newIndex;
+                    return;
+                }
             }
             base.WndProc(ref m);
         }
