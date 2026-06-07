@@ -42,8 +42,9 @@
             pnlSettings = new Panel();
             lblVolumeText = new Label();
             trackBarVolume = new TrackBar();
+            lblSoundSelect = new Label();
+            cbSoundSelect = new ReverseScrollComboBox();
             lblVolumeValue = new Label();
-            btnSelectAudio = new Button();
             btnToggleNotification = new Button();
             pnlFooter = new Panel();
             btnGoToForm2 = new Button();
@@ -199,16 +200,17 @@
             // pnlSettings
             // 
             pnlSettings.BackColor = Color.FromArgb(18, 18, 18);
+            pnlSettings.Controls.Add(lblSoundSelect);
+            pnlSettings.Controls.Add(cbSoundSelect);
+            pnlSettings.Controls.Add(btnToggleNotification);
             pnlSettings.Controls.Add(lblVolumeText);
             pnlSettings.Controls.Add(trackBarVolume);
             pnlSettings.Controls.Add(lblVolumeValue);
-            pnlSettings.Controls.Add(btnSelectAudio);
-            pnlSettings.Controls.Add(btnToggleNotification);
             pnlSettings.Dock = DockStyle.Top;
             pnlSettings.Location = new Point(0, 250);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(20, 15, 20, 15);
-            pnlSettings.Size = new Size(480, 90);
+            pnlSettings.Size = new Size(480, 115);
             pnlSettings.TabIndex = 3;
             // 
             // lblVolumeText
@@ -216,19 +218,19 @@
             lblVolumeText.AutoSize = true;
             lblVolumeText.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             lblVolumeText.ForeColor = Color.DarkGray;
-            lblVolumeText.Location = new Point(20, 15);
+            lblVolumeText.Location = new Point(20, 60);
             lblVolumeText.Name = "lblVolumeText";
             lblVolumeText.Size = new Size(47, 15);
-            lblVolumeText.TabIndex = 0;
+            lblVolumeText.TabIndex = 3;
             lblVolumeText.Text = "Volume";
             // 
             // trackBarVolume
             // 
             trackBarVolume.LargeChange = 25;
-            trackBarVolume.Location = new Point(20, 35);
+            trackBarVolume.Location = new Point(20, 75);
             trackBarVolume.Maximum = 100;
             trackBarVolume.Name = "trackBarVolume";
-            trackBarVolume.Size = new Size(120, 45);
+            trackBarVolume.Size = new Size(120, 38);
             trackBarVolume.SmallChange = 5;
             trackBarVolume.TabIndex = 1;
             trackBarVolume.TickStyle = TickStyle.None;
@@ -241,27 +243,44 @@
             lblVolumeValue.AutoSize = true;
             lblVolumeValue.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             lblVolumeValue.ForeColor = Color.FromArgb(0, 122, 204);
-            lblVolumeValue.Location = new Point(145, 40);
+            lblVolumeValue.Location = new Point(145, 78);
             lblVolumeValue.Name = "lblVolumeValue";
             lblVolumeValue.Size = new Size(28, 15);
-            lblVolumeValue.TabIndex = 2;
+            lblVolumeValue.TabIndex = 4;
             lblVolumeValue.Text = "100";
-            // 
-            // btnSelectAudio
-            // 
-            btnSelectAudio.BackColor = Color.FromArgb(45, 45, 45);
-            btnSelectAudio.FlatAppearance.BorderSize = 0;
-            btnSelectAudio.FlatStyle = FlatStyle.Flat;
-            btnSelectAudio.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            btnSelectAudio.ForeColor = Color.White;
-            btnSelectAudio.Location = new Point(200, 25);
-            btnSelectAudio.Name = "btnSelectAudio";
-            btnSelectAudio.Size = new Size(110, 35);
-            btnSelectAudio.TabIndex = 3;
-            btnSelectAudio.Text = "Audio Settings";
-            toolTip.SetToolTip(btnSelectAudio, "Select custom notification sound");
-            btnSelectAudio.UseVisualStyleBackColor = false;
-            btnSelectAudio.Click += btnSelectAudio_Click;
+            //
+            // lblSoundSelect
+            //
+            lblSoundSelect.AutoSize = true;
+            lblSoundSelect.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            lblSoundSelect.ForeColor = Color.DarkGray;
+            lblSoundSelect.Location = new Point(20, 4);
+            lblSoundSelect.Name = "lblSoundSelect";
+            lblSoundSelect.Size = new Size(70, 15);
+            lblSoundSelect.TabIndex = 0;
+            lblSoundSelect.Text = "Timer Sound";
+            //
+            // cbSoundSelect
+            //
+            cbSoundSelect.BackColor = Color.FromArgb(45, 45, 45);
+            cbSoundSelect.DropDownStyle = ComboBoxStyle.DropDownList;
+            cbSoundSelect.FlatStyle = FlatStyle.Flat;
+            cbSoundSelect.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cbSoundSelect.ForeColor = Color.White;
+            cbSoundSelect.FormattingEnabled = true;
+            cbSoundSelect.Items.AddRange(new object[] {
+                "Default",
+                "Alarm",
+                "Buzzer",
+                "Chime",
+                "Funny",
+                "Browse custom sound..."});
+            cbSoundSelect.Location = new Point(20, 22);
+            cbSoundSelect.Name = "cbSoundSelect";
+            cbSoundSelect.Size = new Size(175, 23);
+            cbSoundSelect.TabIndex = 1;
+            toolTip.SetToolTip(cbSoundSelect, "Select timer completion sound");
+            cbSoundSelect.SelectedIndexChanged += cbSoundSelect_SelectedIndexChanged;
             // 
             // btnToggleNotification
             // 
@@ -270,10 +289,10 @@
             btnToggleNotification.FlatStyle = FlatStyle.Flat;
             btnToggleNotification.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             btnToggleNotification.ForeColor = Color.White;
-            btnToggleNotification.Location = new Point(320, 25);
+            btnToggleNotification.Location = new Point(210, 18);
             btnToggleNotification.Name = "btnToggleNotification";
-            btnToggleNotification.Size = new Size(140, 35);
-            btnToggleNotification.TabIndex = 4;
+            btnToggleNotification.Size = new Size(140, 33);
+            btnToggleNotification.TabIndex = 2;
             btnToggleNotification.Text = "Mode: Notification";
             toolTip.SetToolTip(btnToggleNotification, "Toggle notification style");
             btnToggleNotification.UseVisualStyleBackColor = false;
@@ -362,7 +381,7 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(18, 18, 18);
-            ClientSize = new Size(480, 395);
+            ClientSize = new Size(480, 420);
             Controls.Add(pnlFooter);
             Controls.Add(pnlSettings);
             Controls.Add(pnlControls);
@@ -407,11 +426,12 @@
         private Button btnReset;
 
         // Settings
+        private Label lblSoundSelect;
+        private ReverseScrollComboBox cbSoundSelect;
+        private Button btnToggleNotification;
         private Label lblVolumeText;
         private TrackBar trackBarVolume;
         private Label lblVolumeValue;
-        private Button btnSelectAudio;
-        private Button btnToggleNotification;
 
         // Footer controls
         private Button btnTopMost;

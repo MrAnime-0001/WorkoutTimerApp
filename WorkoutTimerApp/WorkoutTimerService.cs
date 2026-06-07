@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using NAudio.Wave;
 using Gma.System.MouseKeyHook;
@@ -18,6 +19,10 @@ namespace WorkoutTimerApp
         public int TotalSeconds { get; private set; }
         public TimerStatus Status { get; private set; } = TimerStatus.Idle;
         public bool IsRunning => Status == TimerStatus.Running;
+        public string CurrentSoundName { get; private set; } = "default";
+        public bool IsCustomSound { get; private set; } = false;
+
+        public static readonly string[] BuiltInSoundNames = { "default", "alarm", "buzzer", "chime", "funny" };
 
         public float Volume
         {
@@ -37,29 +42,91 @@ namespace WorkoutTimerApp
             _timer.Tick += OnTimerTick;
 
             _waveOut = new WaveOutEvent();
-            InitializeSoundPlayer();
+            InitializeDefaultSound();
 
             _globalHook = Hook.GlobalEvents();
             _globalHook.KeyDown += OnGlobalKeyDown;
         }
 
-        public void InitializeSoundPlayer(string? filePath = null)
+        private string? GetSoundsDirectory()
+        {
+            string soundsDir = Path.Combine(Application.StartupPath, "Sounds");
+            if (Directory.Exists(soundsDir))
+                return soundsDir;
+            return null;
+        }
+
+        private void InitializeDefaultSound()
         {
             try
             {
-                if (string.IsNullOrEmpty(filePath))
+                string? soundsDir = GetSoundsDirectory();
+                string[] possiblePaths;
+
+                if (soundsDir != null)
                 {
-                    string[] possiblePaths = new string[]
+                    possiblePaths = new string[]
+                    {
+                        Path.Combine(soundsDir, "default.mp3"),
+                        Path.Combine(soundsDir, "funny.mp3"),
+                        Path.Combine(Application.StartupPath, "timer_end.mp3"),
+                        Path.Combine(Application.StartupPath, "timer_end v2.mp3"),
+                    };
+                }
+                else
+                {
+                    possiblePaths = new string[]
                     {
                         Path.Combine(Application.StartupPath, "timer_end.mp3"),
                         Path.Combine(Application.StartupPath, "timer_end v2.mp3"),
-                        "timer_end.mp3"
                     };
-                    foreach (var path in possiblePaths)
+                }
+
+                foreach (var path in possiblePaths)
+                {
+                    if (File.Exists(path))
                     {
-                        if (File.Exists(path)) { filePath = path; break; }
+                        InitializeSoundPlayer(path);
+                        return;
                     }
                 }
+            }
+            catch { }
+        }
+
+        public void SwitchToBuiltInSound(string soundName)
+        {
+            if (!BuiltInSoundNames.Contains(soundName)) return;
+
+            try
+            {
+                string? soundsDir = GetSoundsDirectory();
+                if (soundsDir == null) return;
+
+                string path = Path.Combine(soundsDir, soundName + ".mp3");
+                if (File.Exists(path))
+                {
+                    InitializeSoundPlayer(path);
+                    CurrentSoundName = soundName;
+                    IsCustomSound = false;
+                }
+            }
+            catch { }
+        }
+
+        public void SwitchToCustomSound(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
+
+            InitializeSoundPlayer(filePath);
+            CurrentSoundName = Path.GetFileNameWithoutExtension(filePath);
+            IsCustomSound = true;
+        }
+
+        public void InitializeSoundPlayer(string filePath)
+        {
+            try
+            {
                 if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return;
 
                 _soundFilePath = filePath;
@@ -80,6 +147,8 @@ namespace WorkoutTimerApp
 
         public void Start(int seconds)
         {
+            if (Status != TimerStatus.Idle) return;
+
             TotalSeconds = seconds;
             CurrentSeconds = seconds;
             SetStatus(TimerStatus.Running);

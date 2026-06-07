@@ -172,7 +172,7 @@ namespace WorkoutTimerApp
             if (_activeForm == null || !_activeForm.Visible)
             {
                 _notifyIcon.ShowBalloonTip(3000, "Workout Complete",
-                    "Your workout timer has finished!", ToolTipIcon.Info);
+                    "Your workout timer has finished!", ToolTipIcon.None);
             }
         }
 

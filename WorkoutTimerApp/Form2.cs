@@ -13,6 +13,7 @@ namespace WorkoutTimerApp
         private TrayController _trayController;
         private ToolTip _toolTip;
         private bool _useMessageBox = false;
+        private AppSettings _settings = null!;
 
         [DllImport("user32.dll")]
         public static extern bool ReleaseCapture();
@@ -32,6 +33,12 @@ namespace WorkoutTimerApp
             _timerService.ResetTriggered += OnResetTriggered;
 
             InitializePresets();
+
+            // Load settings
+            _settings = AppSettings.Load();
+            _useMessageBox = _settings.NotificationMode;
+            TopMost = _settings.TopMost;
+            btnTopMost2.BackColor = TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
 
             TimerPreset? defaultPreset = GetPresetBySeconds(60);
             if (defaultPreset != null) cbPresets2.SelectedItem = defaultPreset;
@@ -83,7 +90,7 @@ namespace WorkoutTimerApp
             if (_useMessageBox)
                 MessageBox.Show("Workout Complete!", "Timer Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
-                NotificationHelper.ShowToast("Workout Complete!", 2000);
+                NotificationHelper.ShowToast("Workout Complete!", 2000, false);
             UpdateUI();
         }
 
@@ -198,6 +205,8 @@ namespace WorkoutTimerApp
         {
             this.TopMost = !this.TopMost;
             btnTopMost2.BackColor = this.TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
+            _settings.TopMost = this.TopMost;
+            _settings.Save();
             NotificationHelper.ShowToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF", 2000);
             this.ActiveControl = null;
         }

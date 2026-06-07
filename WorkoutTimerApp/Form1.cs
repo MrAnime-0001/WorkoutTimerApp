@@ -13,6 +13,7 @@ namespace WorkoutTimerApp
         private TrayController _trayController;
         private ToolTip _toolTip;
         private bool _useMessageBox = false;
+        private AppSettings _settings = null!;
 
         [DllImport("user32.dll")]
         public static extern bool ReleaseCapture();
@@ -32,6 +33,10 @@ namespace WorkoutTimerApp
             _timerService.ResetTriggered += OnResetTriggered;
 
             InitializePresets();
+
+            // Load settings
+            _settings = AppSettings.Load();
+            ApplySettings();
 
             TimerPreset? defaultPreset = GetPresetBySeconds(60);
             if (defaultPreset != null) cbPresets.SelectedItem = defaultPreset;
@@ -83,7 +88,7 @@ namespace WorkoutTimerApp
             if (_useMessageBox)
                 MessageBox.Show("Workout Complete!", "Timer Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
-                NotificationHelper.ShowToast("Workout Complete!", 1000);
+                NotificationHelper.ShowToast("Workout Complete!", 1000, false);
             UpdateUI();
         }
 
@@ -220,6 +225,8 @@ namespace WorkoutTimerApp
             this.TopMost = !this.TopMost;
             btnTopMost.BackColor = this.TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
             btnTopMost.Text = this.TopMost ? "Unpin Window" : "Pin Window";
+            _settings.TopMost = this.TopMost;
+            _settings.Save();
             NotificationHelper.ShowToast(this.TopMost ? "Always on Top: ON" : "Always on Top: OFF", 1000);
             this.ActiveControl = null;
         }
@@ -228,6 +235,8 @@ namespace WorkoutTimerApp
         {
             _useMessageBox = !_useMessageBox;
             UpdateToggleButtonText();
+            _settings.NotificationMode = _useMessageBox;
+            _settings.Save();
             NotificationHelper.ShowToast(_useMessageBox ? "Message Box mode enabled." : "Notification mode enabled.", 550, false);
         }
 
@@ -256,17 +265,83 @@ namespace WorkoutTimerApp
             }
         }
 
-        private void btnSelectAudio_Click(object sender, EventArgs e)
+        private void ApplySettings()
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog { Filter = "Audio Files|*.mp3;*.wav|All Files|*.*" };
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-                _timerService.InitializeSoundPlayer(openFileDialog.FileName);
+            // Sound selection — fall back to index 0 if saved name no longer valid
+            if (!string.IsNullOrEmpty(_settings.CustomSoundPath) && File.Exists(_settings.CustomSoundPath))
+            {
+                _timerService.SwitchToCustomSound(_settings.CustomSoundPath);
+                cbSoundSelect.SelectedItem = "Browse custom sound...";
+            }
+            else
+            {
+                _settings.CustomSoundPath = null;
+                int idx = Array.IndexOf(WorkoutTimerService.BuiltInSoundNames, _settings.SelectedSound);
+                if (idx < 0 || idx >= cbSoundSelect.Items.Count - 1)
+                {
+                    idx = 0;
+                    _settings.SelectedSound = WorkoutTimerService.BuiltInSoundNames[0];
+                }
+                cbSoundSelect.SelectedIndex = idx;
+                _timerService.SwitchToBuiltInSound(_settings.SelectedSound);
+            }
+
+            // Volume
+            int vol = (int)(_settings.Volume * 100);
+            trackBarVolume.Value = Math.Clamp(vol, trackBarVolume.Minimum, trackBarVolume.Maximum);
+            lblVolumeValue.Text = trackBarVolume.Value.ToString();
+            _timerService.Volume = _settings.Volume;
+
+            // Notification mode
+            _useMessageBox = _settings.NotificationMode;
+
+            // TopMost
+            TopMost = _settings.TopMost;
+            btnTopMost.BackColor = TopMost ? Color.FromArgb(0, 150, 255) : Color.FromArgb(45, 45, 45);
+            btnTopMost.Text = TopMost ? "Unpin Window" : "Pin Window";
+        }
+
+        private void cbSoundSelect_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            if (cbSoundSelect.SelectedItem is not string selected) return;
+
+            if (selected == "Browse custom sound...")
+            {
+                OpenFileDialog openFileDialog = new OpenFileDialog
+                {
+                    Filter = "Audio Files|*.mp3;*.wav|All Files|*.*",
+                    Title = "Select Custom Timer Sound"
+                };
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    _timerService.SwitchToCustomSound(openFileDialog.FileName);
+                    _settings.SelectedSound = "custom";
+                    _settings.CustomSoundPath = openFileDialog.FileName;
+                    _settings.Save();
+                    cbSoundSelect.SelectedItem = "Browse custom sound...";
+                }
+                else
+                {
+                    // Revert to previously selected sound
+                    int prevIdx = Array.IndexOf(WorkoutTimerService.BuiltInSoundNames, _settings.SelectedSound);
+                    cbSoundSelect.SelectedIndex = prevIdx >= 0 ? prevIdx : 0;
+                }
+                return;
+            }
+
+            string soundName = selected.ToLower();
+            _timerService.SwitchToBuiltInSound(soundName);
+            _settings.SelectedSound = soundName;
+            _settings.CustomSoundPath = null;
+            _settings.Save();
         }
 
         private void trackBarVolume_Scroll(object sender, EventArgs e)
         {
             _timerService.Volume = (float)trackBarVolume.Value / trackBarVolume.Maximum;
             lblVolumeValue.Text = trackBarVolume.Value.ToString();
+            _settings.Volume = _timerService.Volume;
+            _settings.Save();
         }
 
         private void btnMinimize_Click(object sender, EventArgs e)
