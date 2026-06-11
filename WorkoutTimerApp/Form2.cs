@@ -44,7 +44,8 @@ namespace WorkoutTimerApp
             if (defaultPreset != null) cbPresets2.SelectedItem = defaultPreset;
 
             UpdateUI();
-            this.Icon = new Icon("profile.ico");
+            using var iconStream = typeof(Program).Assembly.GetManifestResourceStream("WorkoutTimerApp.profile.ico")!;
+            this.Icon = new Icon(iconStream);
 
             pnlHeader2.MouseDown += DragForm;
             lblTitle2.MouseDown += DragForm;

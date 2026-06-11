@@ -6,16 +6,14 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>profile.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="profile.ico" />
+    <EmbeddedResource Include="profile.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="profile.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="Sounds\**\*.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

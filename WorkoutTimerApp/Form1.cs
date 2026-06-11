@@ -42,7 +42,8 @@ namespace WorkoutTimerApp
             if (defaultPreset != null) cbPresets.SelectedItem = defaultPreset;
 
             UpdateToggleButtonText();
-            this.Icon = new Icon("profile.ico");
+            using var iconStream = typeof(Program).Assembly.GetManifestResourceStream("WorkoutTimerApp.profile.ico")!;
+            this.Icon = new Icon(iconStream);
 
             pnlHeader.MouseDown += DragForm;
             lblPresetName.MouseDown += DragForm;

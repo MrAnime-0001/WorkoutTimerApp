@@ -33,7 +33,7 @@ namespace WorkoutTimerApp
         {
             _notifyIcon = new NotifyIcon
             {
-                Icon = new Icon("profile.ico"),
+                Icon = new Icon(typeof(Program).Assembly.GetManifestResourceStream("WorkoutTimerApp.profile.ico")!),
                 Visible = false,
                 Text = "Workout Timer"
             };
